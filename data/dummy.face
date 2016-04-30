@@ -1,0 +1,5 @@
+# MSMS solvent excluded surface faces for ./1crn.xyzr
+#faces  #sphere density probe_r
+   4944     327  1.00  1.50
+    1   2      3  3      3
+  	3   4      5  3      3
