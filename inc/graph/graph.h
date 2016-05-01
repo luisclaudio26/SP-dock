@@ -19,6 +19,8 @@ public:
 		return nodes.size();
 	}
 
+	void push_node(double x, double y, double z);
+
 	//-------------------------------
 	//--------- Operations ----------
 	//-------------------------------
@@ -27,6 +29,11 @@ public:
 	void compute_curvatures();
 	void segment_by_curvature(UnionFind& uf);
 	void feature_points(const UnionFind& uf, std::vector<unsigned int>& feature);
+
+	//--------------------------------
+	//-------- Debugging ops ---------
+	//--------------------------------
+	std::string graph2str();
 };
 
 #endif
