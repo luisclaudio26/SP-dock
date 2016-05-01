@@ -14,11 +14,14 @@ private:
 	Vec4 pos, curvature;
 	Convexity type;
 
-	std::vector<std::pair<Node,Node> > ngbr;
+	//We store the indices to the neighbours
+	std::vector<std::pair<int, int> > ngbr;
 
 public:
 	Node();
 	Node(const Vec4& pos);
+
+	void push_triangular_face(int adj1, int adj2);
 
 	std::string node2str();
 };

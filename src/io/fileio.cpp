@@ -38,12 +38,45 @@ static void load_vertice(std::string vert, Graph& g)
 		load_vertex(buffer, g);
 	}
 
-	std::cout<<g.graph2str()<<std::endl;;
-
 	//Close file
 	in.close();
 }
 
+static void load_edge(std::string line, Graph& g)
+{
+	std::stringstream ss(line);
+
+	int v1, v2, v3;
+	ss>>v1>>v2>>v3;
+
+	//Indexes inside file are 1-index based
+	v1--; v2--; v3--;
+
+	g.push_triangular_face(v1, v2, v3);
+	g.push_triangular_face(v2, v1, v3);
+	g.push_triangular_face(v3, v1, v2);
+}
+
+static void load_edges(std::string face, Graph& g)
+{
+	std::fstream in;
+	in.open(face, std::fstream::in);
+
+	//Consume first three lines which are just header info
+	in.ignore(IGNORE_N, '\n');
+	in.ignore(IGNORE_N, '\n');
+	in.ignore(IGNORE_N, '\n');
+
+	while( !in.eof() )
+	{
+		std::string buffer;
+		getline(in, buffer);
+
+		load_edge(buffer, g);
+	}
+
+	in.close();
+}
 
 //-----------------------------------------------
 //--------------- FROM FILEIO.H -----------------
@@ -55,4 +88,7 @@ FileIO::FileIO() { }
 void FileIO::mesh_from_file(std::string vert, std::string face, Graph& g)
 {
 	load_vertice(vert, g);
+	load_edges(face, g);
+
+	std::cout<<g.graph2str()<<std::endl;
 }
