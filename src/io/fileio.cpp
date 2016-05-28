@@ -89,6 +89,4 @@ void FileIO::mesh_from_file(std::string vert, std::string face, Graph& g)
 {
 	load_vertice(vert, g);
 	load_edges(face, g);
-
-	std::cout<<g.graph2str()<<std::endl;
 }

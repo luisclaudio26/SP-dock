@@ -21,8 +21,25 @@ public:
 	Node();
 	Node(const Vec4& pos);
 
+	//-----------------------------------
+	//--------- Access methods ----------
+	//-----------------------------------
+	void set_curvature(const Vec4& c);
+
+	Vec4 get_pos() const { return this->pos; }
+
+	int n_incident_faces() const { return ngbr.size(); }
+	std::pair<int,int> get_face(int index) const;
+
+	//-------------------------------
+	//--------- Operations ----------
+	//-------------------------------
+	//These operations change the internal state of the node
 	void push_triangular_face(int adj1, int adj2);
 
+	//--------------------------------
+	//-------- Debugging ops ---------
+	//--------------------------------
 	std::string node2str();
 };
 

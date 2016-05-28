@@ -28,6 +28,8 @@ int main(int argc, char** args)
 
 	//From here on, describe point, group-based matching,
 	//ICP, scoring, etc.
+	std::cout<<mesh_graph.graph2str()<<std::endl;
+
 
 	return 0;
 }
