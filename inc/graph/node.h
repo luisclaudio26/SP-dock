@@ -23,12 +23,14 @@ public:
 	//-----------------------------------
 	//--------- Access methods ----------
 	//-----------------------------------
-	void set_curvature(const glm::dvec3& c);
-
+	glm::dvec3 get_curvature() const { return this->curvature; }
 	glm::dvec3 get_pos() const { return this->pos; }
 
 	int n_incident_faces() const { return ngbr.size(); }
 	std::pair<int,int> get_face(int index) const;
+
+	void set_curvature(const glm::dvec3& c);
+	void set_convexity(const Convexity& type) { this->type = type; }
 
 	//-------------------------------
 	//--------- Operations ----------

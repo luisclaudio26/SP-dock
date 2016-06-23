@@ -7,8 +7,8 @@
 
 int main(int argc, char** args)
 {
-	std::string vertfile("./data/dummy.vert");
-	std::string facefile("./data/dummy.face");
+	std::string vertfile("./data/convexitytest.vert");
+	std::string facefile("./data/convexitytest.face");
 
 	//Load molecular surface as generated from MSMS program
 	Graph mesh_graph;
@@ -16,6 +16,9 @@ int main(int argc, char** args)
 
 	//Compute curvature for each point in mesh
 	mesh_graph.compute_curvatures();
+
+	//classify each point as convex/concave/flat
+	mesh_graph.classify_points();
 
 	//Get contiguous regions of convex/concave/flat points
 	UnionFind uf( mesh_graph.size() );

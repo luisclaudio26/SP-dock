@@ -15,9 +15,7 @@ public:
 	//---------------------------------
 	//--------- Access method ---------
 	//---------------------------------
-	unsigned int size() {
-		return nodes.size();
-	}
+	unsigned int size() { return nodes.size(); }
 
 	void push_node(double x, double y, double z);
 	void push_triangular_face(int node, int adj1, int adj2);
@@ -28,6 +26,7 @@ public:
 	//These operations change the internal
 	//state of the Graph
 	void compute_curvatures();
+	void classify_points();
 	void segment_by_curvature(UnionFind& uf);
 	void feature_points(const UnionFind& uf, std::vector<unsigned int>& feature);
 

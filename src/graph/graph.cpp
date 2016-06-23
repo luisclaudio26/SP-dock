@@ -36,6 +36,31 @@ void Graph::compute_curvatures()
 	}
 }
 
+void Graph::classify_points()
+{
+	//TODO: THIS METHOD WON'T WORK AS WE DO IT NOW
+	//unless centroid is inside mesh. Bruno's suggestion
+	//was to discretize using voxels and then test
+	//whether the normal vector points towards the center
+	//of the implicit mesh
+	std::vector<glm::dvec3> point_cloud;
+	for(auto it = this->nodes.begin(); it != this->nodes.end(); ++it)
+		point_cloud.push_back( it->get_pos() );
+
+	glm::dvec3 centroid = cloud_centroid(point_cloud);
+	for(auto it = this->nodes.begin(); it != this->nodes.end(); ++it)
+	{
+		double dot_centroid_curv = glm::dot(centroid - it->get_pos(), it->get_curvature());
+
+		if( d_equals(dot_centroid_curv, 0.0) )
+			it->set_convexity( FLAT );
+		else if( dot_centroid_curv > 0)
+			it->set_convexity( CONVEX );
+		else
+			it->set_convexity( CONCAVE );
+	}
+}
+
 void Graph::segment_by_curvature(UnionFind& uf)
 {
 	

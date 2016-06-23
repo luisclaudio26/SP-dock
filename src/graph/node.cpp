@@ -35,9 +35,11 @@ std::string Node::node2str()
 	std::stringstream ss;
 
 	ss<<"Node[ Pos = ("<<pos.x<<", "<<pos.y<<", "<<pos.z<<"), ";
-	ss<<" Curvature = ("<<curvature.x<<", "<<curvature.y<<", "<<curvature.z<<") -> adj: ";
+	ss<<" Curvature = ("<<curvature.x<<", "<<curvature.y<<", "<<curvature.z<<") ["<<this->type<<"] -> adj: ";
+	
 	for(auto it = ngbr.begin(); it != ngbr.end(); ++it)
 		ss<<"("<<it->first<<", "<<it->second<<"), ";
+	
 	ss<<"]";
 
 	return ss.str();
