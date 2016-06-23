@@ -25,6 +25,7 @@ public:
 	//-----------------------------------
 	glm::dvec3 get_curvature() const { return this->curvature; }
 	glm::dvec3 get_pos() const { return this->pos; }
+	Convexity get_type() const { return this->type; }
 
 	int n_incident_faces() const { return ngbr.size(); }
 	std::pair<int,int> get_face(int index) const;

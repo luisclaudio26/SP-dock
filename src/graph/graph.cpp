@@ -1,7 +1,47 @@
 #include "../../inc/graph/graph.h"
 #include "../../inc/math/linalg.h"
+#include "../../inc/util/unionfind.h"
 #include <sstream>
+#include <cstring>
 
+//-------------------------------------------------
+//------------------- INTERNAL --------------------
+//-------------------------------------------------
+void cluster_nodes_by_type(int current, bool visited[], const std::vector<Node>& nodes, UnionFind& UF)
+{
+	//if already visited, skip
+	if(visited[current]) return;
+
+	//retrieve current node
+	const Node& cur = nodes.at(current);
+
+	//mark as visited
+	visited[current] = true;
+
+	//loop through all adjacent nodes and union with every
+	//one with the same convexity
+	for(int i = 0; i < cur.n_incident_faces(); i++)
+	{
+		//get adjacent nodes in this face
+		const std::pair<int,int> f = cur.get_face(i);
+		const Node &f1 = nodes[f.first], &f2 = nodes[f.second];
+
+		//merge if convexity is the same
+		if( cur.get_type() == f1.get_type() )
+			UF.union(current, f.first);
+
+		if( cur.get_type() == f2.get_type() )
+			UF.union(current, f.second);
+
+		//recursively cluster
+		cluster_nodes_by_type(f.first, visited, nodes, UF);
+		cluster_nodes_by_type(f.second, visited, nodes, UF);
+	}
+}
+
+//-----------------------------------------------------
+//------------------- FROM GRAPH.H --------------------
+//-----------------------------------------------------
 void Graph::compute_curvatures()
 {
 	for(auto n = nodes.begin(); n != nodes.end(); ++n)
@@ -63,7 +103,13 @@ void Graph::classify_points()
 
 void Graph::segment_by_curvature(UnionFind& uf)
 {
-	
+	bool *visited = new bool[this->nodes.size()];
+	memset( visited, 0, sizeof(bool)*this->nodes.size() );
+
+	//recursively cluster nodes
+	cluster_nodes_by_type(0, visited, this->nodes, uf);
+
+	delete[] visited;
 }
 
 void Graph::feature_points(const UnionFind& uf, std::vector<unsigned int>& feature)
