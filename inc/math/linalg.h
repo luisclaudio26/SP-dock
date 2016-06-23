@@ -1,8 +1,8 @@
 #ifndef _LIN_ALG_H_
 #define _LIN_ALG_G_
 
-#include "vec4.h"
+#include <glm/glm.hpp>
 
-Vec4 triangle_centroid(const Vec4& p1, const Vec4& p2, const Vec4& p3);
+glm::dvec3 triangle_centroid(const glm::dvec3& p1, const glm::dvec3& p2, const glm::dvec3& p3);
 
 #endif

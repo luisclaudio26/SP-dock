@@ -7,7 +7,7 @@ Node::Node()
 	
 }
 
-Node::Node(const Vec4& pos)
+Node::Node(const glm::dvec3& pos)
 {
 	this->pos = pos;
 }
@@ -34,8 +34,8 @@ std::string Node::node2str()
 {
 	std::stringstream ss;
 
-	ss<<"Node[ Pos = ("<<pos.x()<<", "<<pos.y()<<", "<<pos.z()<<"), ";
-	ss<<" Curvature = ("<<curvature.x()<<", "<<curvature.y()<<", "<<curvature.z()<<", "<<curvature.w()<<") -> adj: ";
+	ss<<"Node[ Pos = ("<<pos.x<<", "<<pos.y<<", "<<pos.z<<"), ";
+	ss<<" Curvature = ("<<curvature.x<<", "<<curvature.y<<", "<<curvature.z<<") -> adj: ";
 	for(auto it = ngbr.begin(); it != ngbr.end(); ++it)
 		ss<<"("<<it->first<<", "<<it->second<<"), ";
 	ss<<"]";
@@ -43,7 +43,7 @@ std::string Node::node2str()
 	return ss.str();
 }
 
-void Node::set_curvature(const Vec4& c)
+void Node::set_curvature(const glm::dvec3& c)
 {
 	this->curvature = c;
 }
