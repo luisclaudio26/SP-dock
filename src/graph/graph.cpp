@@ -28,10 +28,10 @@ void cluster_nodes_by_type(int current, bool visited[], const std::vector<Node>&
 
 		//merge if convexity is the same
 		if( cur.get_type() == f1.get_type() )
-			UF.union(current, f.first);
+			UF.merge(current, f.first);
 
 		if( cur.get_type() == f2.get_type() )
-			UF.union(current, f.second);
+			UF.merge(current, f.second);
 
 		//recursively cluster
 		cluster_nodes_by_type(f.first, visited, nodes, UF);
