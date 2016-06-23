@@ -4,6 +4,10 @@
 #include <sstream>
 #include <cstring>
 
+#include <iostream>
+using std::cout;
+using std::endl;
+
 //-------------------------------------------------
 //------------------- INTERNAL --------------------
 //-------------------------------------------------
@@ -110,6 +114,17 @@ void Graph::segment_by_curvature(UnionFind& uf)
 	cluster_nodes_by_type(0, visited, this->nodes, uf);
 
 	delete[] visited;
+
+	//unit test
+	std::vector< std::vector<int> > clusters;
+	uf.clusters(clusters);
+
+	for(auto i = clusters.begin(); i != clusters.end(); ++i)
+	{
+		for(auto j = i->begin(); j != i->end(); ++j)
+			cout<<*j<<" -> ";
+		cout<<endl;
+	}
 }
 
 void Graph::feature_points(const UnionFind& uf, std::vector<unsigned int>& feature)
