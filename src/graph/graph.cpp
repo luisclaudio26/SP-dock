@@ -129,7 +129,26 @@ void Graph::segment_by_curvature(UnionFind& uf)
 
 void Graph::feature_points(const UnionFind& uf, std::vector<unsigned int>& feature)
 {
-	
+	/* Step 0: generate clusters of points
+	 * Step 1: select a continuous region of surface points with same type
+	 * Step 2: rank all region points according to their distance from
+	 *			from the region contour and select those with the maximum
+	 *			distance as seed points. <<<<< VERY IMPORTANT
+	 * Step 3: expand each seed point uniformly to all directions along the surface
+	 * 			until the region contour is reached.
+
+	We must create a structure to hold each feature point, which is in fact the seed
+	with all the points in neighbourhood. Feature point will be used by the descriptor
+
+	how to define which points lie on the countour?
+		-> points fully inside the region are such that ALL of its immediate neighbours
+			do lie in the same region. The points of the contour are the ones which
+			are not fully inside the region.
+
+	how to rank the points according to distance?
+		-> expand in breadth and stop when the first contour point is find. Store it
+			with the distance info
+	*/
 }
 
 void Graph::push_node(double x, double y, double z)
