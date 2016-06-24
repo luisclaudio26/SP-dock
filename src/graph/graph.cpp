@@ -177,6 +177,10 @@ void Graph::feature_points(const UnionFind& uf, std::vector<unsigned int>& featu
 		//get contour for this cluster, i.e., the list of points on the border
 		std::vector<int> contour;
 		get_contour_from_cluster(this->nodes, *region, contour);
+
+		for(auto it = contour.begin(); it != contour.end(); ++it)
+			cout<<*it<<", ";
+		cout<<endl;
 	}
 
 
