@@ -14,7 +14,7 @@ UnionFind::~UnionFind()
 	delete[] parent;
 }
 
-int UnionFind::find(int a)
+int UnionFind::find(int a) const
 {
 	//TODO: error checking here
 	if( parent[a] == a ) return a;
@@ -28,7 +28,7 @@ void UnionFind::merge(int a, int b)
 	parent[pb] = pa;
 }
 
-void UnionFind::clusters(std::vector< std::vector<int> >& clusters)
+void UnionFind::clusters(std::vector< std::vector<int> >& clusters) const
 {
 	int count = 0;
 	int *hash = new int[this->n];

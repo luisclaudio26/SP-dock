@@ -18,12 +18,12 @@ public:
 	~UnionFind();
 
 	//classical operations
-	int find(int a);
+	int find(int a) const;
 	void merge(int a, int b);
 
 	//extra-operation: return a list of lists,
 	//each one with a cluster (a disjoint set)
-	void clusters(std::vector< std::vector<int> >& clusters);
+	void clusters(std::vector< std::vector<int> >& clusters) const;
 };
 
 #endif
