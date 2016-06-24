@@ -11,7 +11,7 @@ using std::endl;
 //-------------------------------------------------
 //------------------- INTERNAL --------------------
 //-------------------------------------------------
-void cluster_nodes_by_type(int current, bool visited[], const std::vector<Node>& nodes, UnionFind& UF)
+static void cluster_nodes_by_type(int current, bool visited[], const std::vector<Node>& nodes, UnionFind& UF)
 {
 	//if already visited, skip
 	if(visited[current]) return;
@@ -43,9 +43,58 @@ void cluster_nodes_by_type(int current, bool visited[], const std::vector<Node>&
 	}
 }
 
+static void get_contour_from_cluster(const std::vector<Node>& nodes, const std::vector<int>& cluster, std::vector<int>& contour)
+{
+	for(auto p = cluster.begin(); p != cluster.end(); ++p)
+	{
+		//check whether every neighbour of this point has
+		//the same convexity, i.e., is on the same region
+		//(can we prove that two adjacent points have the
+		//same convexity if and only if they lie on the
+		//same cluster?)
+		const Node &P = nodes.at(*p);
+		bool in_contour = false;
+
+		//loop through each face incident to P and check
+		//whether they lie on the same region or not
+		for(int i = 0; i < P.n_incident_faces(); i++)
+		{
+			const Node &n1 = nodes[P.get_face(i).first];
+			const Node &n2 = nodes[P.get_face(i).second];
+
+			if(n1.get_type() != P.get_type()) in_contour = true;
+			if(n2.get_type() != P.get_type()) in_contour = true;
+		}
+
+		if(in_contour) contour.push_back(*p);
+	}
+}
+
 //-----------------------------------------------------
 //------------------- FROM GRAPH.H --------------------
 //-----------------------------------------------------
+void Graph::push_node(double x, double y, double z)
+{
+	this->nodes.push_back( Node( glm::dvec3(x,y,z) ) );
+}
+
+void Graph::push_triangular_face(int node, int adj1, int adj2)
+{
+	this->nodes[node].push_triangular_face(adj1, adj2);
+}
+
+std::string Graph::graph2str()
+{
+	std::stringstream ss;
+
+	ss<<"Graph[ ";
+	for(auto it = nodes.begin(); it != nodes.end(); ++it)
+		ss<<it->node2str()<<", \n";
+	ss<<"]";
+	
+	return ss.str();
+}
+
 void Graph::compute_curvatures()
 {
 	for(auto n = nodes.begin(); n != nodes.end(); ++n)
@@ -114,21 +163,23 @@ void Graph::segment_by_curvature(UnionFind& uf)
 	cluster_nodes_by_type(0, visited, this->nodes, uf);
 
 	delete[] visited;
-
-	//unit test
-	std::vector< std::vector<int> > clusters;
-	uf.clusters(clusters);
-
-	for(auto i = clusters.begin(); i != clusters.end(); ++i)
-	{
-		for(auto j = i->begin(); j != i->end(); ++j)
-			cout<<*j<<" -> ";
-		cout<<endl;
-	}
 }
 
 void Graph::feature_points(const UnionFind& uf, std::vector<unsigned int>& feature)
 {
+	//cluster points by convexity
+	std::vector< std::vector<int> > clusters;
+	uf.clusters(clusters);
+
+	//get feature points from each cluster
+	for(auto region = clusters.begin(); region != clusters.end(); ++region)
+	{
+		//get contour for this cluster, i.e., the list of points on the border
+		std::vector<int> contour;
+		get_contour_from_cluster(this->nodes, *region, contour);
+	}
+
+
 	/* Step 0: generate clusters of points
 	 * Step 1: select a continuous region of surface points with same type
 	 * Step 2: rank all region points according to their distance from
@@ -151,24 +202,3 @@ void Graph::feature_points(const UnionFind& uf, std::vector<unsigned int>& featu
 	*/
 }
 
-void Graph::push_node(double x, double y, double z)
-{
-	this->nodes.push_back( Node( glm::dvec3(x,y,z) ) );
-}
-
-void Graph::push_triangular_face(int node, int adj1, int adj2)
-{
-	this->nodes[node].push_triangular_face(adj1, adj2);
-}
-
-std::string Graph::graph2str()
-{
-	std::stringstream ss;
-
-	ss<<"Graph[ ";
-	for(auto it = nodes.begin(); it != nodes.end(); ++it)
-		ss<<it->node2str()<<", \n";
-	ss<<"]";
-	
-	return ss.str();
-}
