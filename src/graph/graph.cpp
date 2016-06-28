@@ -74,8 +74,11 @@ static void get_contour_from_cluster(const std::vector<Node>& nodes, const std::
 
 static int expand_node_in_breadth(const std::vector<Node>& nodes, const std::set<int>& contour, int node)
 {
-	bool *visited = new bool[contour.size()]; 	//TODO: not sure whether this is correct
-	std::queue<std::pair<int,int> > Q;			//Pairs have form <NODE,DISTANCE> 
+	bool *visited = new bool[contour.size()]; 	
+	memset(visited, 0, sizeof(bool)*contour.size());
+
+	//Pairs have form <NODE,DISTANCE>
+	std::queue<std::pair<int,int> > Q;			 
 	Q.push( std::pair<int,int>(node, 0) );
 
 	bool border_reached = false;
@@ -90,7 +93,11 @@ static int expand_node_in_breadth(const std::vector<Node>& nodes, const std::set
 		visited[id] = true;
 
 		//if N is on the contour, stop and return distance
-		if( contour.count(id) > 0 ) return dist;
+		if( contour.count(id) > 0 ) 
+		{
+			delete[] visited;
+			return dist;
+		}
 
 		//if not, push all neighbours to queue
 		const Node& N = nodes[ id ];
@@ -226,6 +233,8 @@ void Graph::feature_points(const UnionFind& uf, std::vector<unsigned int>& featu
 		for(auto p = region->begin(); p != region->end(); ++p)
 		{
 			int dist_p = expand_node_in_breadth(this->nodes, contour, *p);
+
+			std::pair<int,int> ranked_point(*p, dist_p);
 		}
 	}
 
