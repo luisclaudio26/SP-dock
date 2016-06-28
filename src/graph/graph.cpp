@@ -3,6 +3,7 @@
 #include "../../inc/util/unionfind.h"
 #include <sstream>
 #include <cstring>
+#include <set>
 
 #include <iostream>
 using std::cout;
@@ -43,7 +44,7 @@ static void cluster_nodes_by_type(int current, bool visited[], const std::vector
 	}
 }
 
-static void get_contour_from_cluster(const std::vector<Node>& nodes, const std::vector<int>& cluster, std::vector<int>& contour)
+static void get_contour_from_cluster(const std::vector<Node>& nodes, const std::vector<int>& cluster, std::set<int>& contour)
 {
 	for(auto p = cluster.begin(); p != cluster.end(); ++p)
 	{
@@ -66,7 +67,7 @@ static void get_contour_from_cluster(const std::vector<Node>& nodes, const std::
 			if(n2.get_type() != P.get_type()) in_contour = true;
 		}
 
-		if(in_contour) contour.push_back(*p);
+		if(in_contour) contour.insert(*p);
 	}
 }
 
@@ -174,13 +175,20 @@ void Graph::feature_points(const UnionFind& uf, std::vector<unsigned int>& featu
 	//get feature points from each cluster
 	for(auto region = clusters.begin(); region != clusters.end(); ++region)
 	{
-		//get contour for this cluster, i.e., the list of points on the border
-		std::vector<int> contour;
+		//get contour for this cluster, i.e., the set of points on the border
+		std::set<int> contour;
 		get_contour_from_cluster(this->nodes, *region, contour);
 
-		for(auto it = contour.begin(); it != contour.end(); ++it)
-			cout<<*it<<", ";
-		cout<<endl;
+		//rank points according to distance from border: expand in breadth
+		//and stop when the first contour point is found. Store it with the
+		//distance info.
+		for(auto p = region->begin(); p != region->end(); ++p)
+		{
+			const Node& P = this->nodes[*p];
+
+			//Expand P in breadth
+			//	-> For each point touched, check if it is in Contour
+		}
 	}
 
 
