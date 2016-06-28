@@ -80,14 +80,17 @@ static void get_contour_from_cluster(const std::vector<Node>& nodes, const std::
 
 static int expand_node_in_breadth(const std::vector<Node>& nodes, const std::set<int>& contour, int node)
 {
-	bool *visited = new bool[contour.size()]; 	
-	memset(visited, 0, sizeof(bool)*contour.size());
+	//unfortunatelly, visited has to be the same size as NODES
+	//because we're using the node id itself to index the table,
+	//though we'll need only contour.size() elements. I can't
+	//think of a better way to do it now, so I'll just leave it
+	//like this. TODO: change it after
+	bool *visited = new bool[nodes.size()]; 	
+	memset(visited, 0, sizeof(bool)*nodes.size());
 
 	//Pairs have form <NODE,DISTANCE>
 	std::queue<std::pair<int,int> > Q;			 
 	Q.push( std::pair<int,int>(node, 0) );
-
-	bool border_reached = false;
 
 	while(!Q.empty())
 	{
@@ -122,7 +125,40 @@ static int expand_node_in_breadth(const std::vector<Node>& nodes, const std::set
 
 	//if we reach this point, something went wrong (our
 	//in-breadth expansion did not reach the border ).
+	//TODO: there's a node returning -1 in test1.* dataset! Check it out
 	return -1;
+}
+
+static Patch generate_patch(const std::vector<Node>& nodes, std::set<int>& unprocessed, int point_id, int distance_from_border)
+{
+	//TODO: FEATURE will become a different object so to store all the points
+	//in the patch.
+
+	bool *visited = new bool[nodes.size()]; 	
+	memset(visited, 0, sizeof(bool)*nodes.size());
+
+	//push all points in the radius we computed for this point
+	std::vector<int> patch; patch.push_back(point_id);
+
+	for(int i = 0; i < distance_from_border; i++)
+		for(auto p = patch.begin(); p != patch.end(); ++p)
+		{
+			visited[*p] = true;
+
+			unprocessed.erase(*p);
+
+			const Node& N = nodes[ *p ];
+			for(int j = 0; j < N.n_incident_faces(); j++)
+			{
+				int n1 = N.get_face(j).first;
+				int n2 = N.get_face(j).second;
+
+				if( !visited[n1] ) patch.push_back( n1 );
+				if( !visited[n2] ) patch.push_back( n2 );
+			}
+		}
+
+	//push to patch and return
 }
 
 //-----------------------------------------------------
@@ -246,8 +282,25 @@ void Graph::feature_points(const UnionFind& uf, std::vector<unsigned int>& featu
 		//sort
 		std::sort(ranked_points.begin(), ranked_points.end(), comp_ranked_point);
 
-		for(auto it = ranked_points.begin(); it != ranked_points.end(); ++it)
-			std::cout<<it->first<<", "<<it->second<<std::endl;
+		//expand each point until the border is reached; the collected points
+		//in this process are the final patches we'll use as feature points.
+		//Do this in order until we cover the whole region.
+		std::set<int> unprocessed;
+		for(int i = 0; i < this->nodes.size(); i++) unprocessed.insert(i);
+
+		int point_index = 0;
+		while(!unprocessed.empty())
+		{
+			//expand points which are furthest from the contour
+			//until we cover the entire region.
+			//TODO: PATCH should be able to capture r-values by use of move semantics in the =operator
+			Patch final_path = generate_patch(this->nodes, unprocessed, ranked_points[point_index].first, ranked_points[point_index].second);
+
+			//get next -> PROBLEM: we need to remove from ranked_points the points
+			//we processed in generate_patch!
+			point_index++;
+		}
+
 	}
 
 
