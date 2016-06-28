@@ -5,6 +5,7 @@
 #include <cstring>
 #include <set>
 #include <queue>
+#include <algorithm>
 
 #include <iostream>
 using std::cout;
@@ -13,6 +14,11 @@ using std::endl;
 //-------------------------------------------------
 //------------------- INTERNAL --------------------
 //-------------------------------------------------
+bool comp_ranked_point(const std::pair<int,int>& rhs, const std::pair<int,int>& lhs)
+{
+	return lhs.second < rhs.second;
+}
+
 static void cluster_nodes_by_type(int current, bool visited[], const std::vector<Node>& nodes, UnionFind& UF)
 {
 	//if already visited, skip
@@ -230,12 +236,18 @@ void Graph::feature_points(const UnionFind& uf, std::vector<unsigned int>& featu
 		//rank points according to distance from border: expand in breadth
 		//and stop when the first contour point is found. Store it with the
 		//distance info.
+		std::vector<std::pair<int,int> > ranked_points;
 		for(auto p = region->begin(); p != region->end(); ++p)
 		{
 			int dist_p = expand_node_in_breadth(this->nodes, contour, *p);
-
-			std::pair<int,int> ranked_point(*p, dist_p);
+			ranked_points.push_back( std::pair<int,int>(*p, dist_p) );
 		}
+
+		//sort
+		std::sort(ranked_points.begin(), ranked_points.end(), comp_ranked_point);
+
+		for(auto it = ranked_points.begin(); it != ranked_points.end(); ++it)
+			std::cout<<it->first<<", "<<it->second<<std::endl;
 	}
 
 
