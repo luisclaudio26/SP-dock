@@ -4,6 +4,7 @@
 #include <sstream>
 #include <cstring>
 #include <set>
+#include <queue>
 
 #include <iostream>
 using std::cout;
@@ -69,6 +70,46 @@ static void get_contour_from_cluster(const std::vector<Node>& nodes, const std::
 
 		if(in_contour) contour.insert(*p);
 	}
+}
+
+static int expand_node_in_breadth(const std::vector<Node>& nodes, const std::set<int>& contour, int node)
+{
+	bool *visited = new bool[contour.size()]; 	//TODO: not sure whether this is correct
+	std::queue<std::pair<int,int> > Q;			//Pairs have form <NODE,DISTANCE> 
+	Q.push( std::pair<int,int>(node, 0) );
+
+	bool border_reached = false;
+
+	while(!Q.empty())
+	{
+		//retrieve node info
+		std::pair<int,int> cur = Q.front(); Q.pop();
+		int dist = cur.second; int id = cur.first;
+
+		//mark as visited
+		visited[id] = true;
+
+		//if N is on the contour, stop and return distance
+		if( contour.count(id) > 0 ) return dist;
+
+		//if not, push all neighbours to queue
+		const Node& N = nodes[ id ];
+		for(int i = 0; i < N.n_incident_faces(); i++)
+		{
+			int n1 = N.get_face(i).first;
+			int n2 = N.get_face(i).second;
+
+			if( !visited[n1] )
+				Q.push( std::pair<int,int>(n1, dist+1) );
+			
+			if( !visited[n2] )
+				Q.push( std::pair<int,int>(n2, dist+1) );
+		}
+	}
+
+	//if we reach this point, something went wrong (our
+	//in-breadth expansion did not reach the border ).
+	return -1;
 }
 
 //-----------------------------------------------------
@@ -184,10 +225,7 @@ void Graph::feature_points(const UnionFind& uf, std::vector<unsigned int>& featu
 		//distance info.
 		for(auto p = region->begin(); p != region->end(); ++p)
 		{
-			const Node& P = this->nodes[*p];
-
-			//Expand P in breadth
-			//	-> For each point touched, check if it is in Contour
+			int dist_p = expand_node_in_breadth(this->nodes, contour, *p);
 		}
 	}
 
