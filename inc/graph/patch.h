@@ -11,7 +11,15 @@ private:
 public:
 	Patch(const std::vector<int>& nodes);
 
-	//TODO: overload operator=(const Patch&&)!
+	std::vector<int> get_nodes() const {
+		return this->nodes;
+	}
+	
+	//Don't if this is correct
+	void operator=(const Patch& p)
+	{
+		this->nodes = p.get_nodes();
+	}
 };
 
 #endif
