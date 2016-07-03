@@ -1,24 +1,33 @@
 #include "../../inc/graph/graph.h"
+#include "../../inc/graph/patch.h"
 #include "../../inc/math/linalg.h"
 #include "../../inc/util/unionfind.h"
 #include <sstream>
 #include <cstring>
 #include <set>
 #include <queue>
+#include <map>
 #include <algorithm>
 
 #include <iostream>
 using std::cout;
 using std::endl;
 
+//-------------------------------------------------------------------
+//------------------- GLOBALS, DEFINES, TYPEDEFS --------------------
+//-------------------------------------------------------------------
+static std::map<int,int> G_DISTANCES;
+static bool comp_by_distance(int rhs_node, int lhs_node) {
+	return G_DISTANCES[lhs_node] < G_DISTANCES[rhs_node];
+}
+typedef bool(*comp_func)(int,int);
+
+#define IN_LIST 0x01
+#define VISITED 0x02
+
 //-------------------------------------------------
 //------------------- INTERNAL --------------------
 //-------------------------------------------------
-bool comp_ranked_point(const std::pair<int,int>& rhs, const std::pair<int,int>& lhs)
-{
-	return lhs.second < rhs.second;
-}
-
 static void cluster_nodes_by_type(int current, bool visited[], const std::vector<Node>& nodes, UnionFind& UF)
 {
 	//if already visited, skip
@@ -125,40 +134,80 @@ static int expand_node_in_breadth(const std::vector<Node>& nodes, const std::set
 
 	//if we reach this point, something went wrong (our
 	//in-breadth expansion did not reach the border ).
-	//TODO: there's a node returning -1 in test1.* dataset! Check it out
+	//TODO: there's a node returning -1 in test1.* dataset! Check it out -> probably it is isolated
 	return -1;
 }
 
-static Patch generate_patch(const std::vector<Node>& nodes, std::set<int>& unprocessed, int point_id, int distance_from_border)
+static Patch generate_patch(const std::vector<Node>& nodes, std::set<int,comp_func>& ranked_points, int point_id)
 {
-	//TODO: FEATURE will become a different object so to store all the points
-	//in the patch.
+	char *visited = new char[nodes.size()]; 	
+	memset(visited, 0, sizeof(char)*nodes.size());
 
-	bool *visited = new bool[nodes.size()]; 	
-	memset(visited, 0, sizeof(bool)*nodes.size());
+	//this is how far we should expand this point
+	int distance_from_border = G_DISTANCES[point_id];
 
-	//push all points in the radius we computed for this point
+	//push all points within the radius of this point
 	std::vector<int> patch; patch.push_back(point_id);
+							visited[point_id] |= IN_LIST;
 
 	for(int i = 0; i < distance_from_border; i++)
-		for(auto p = patch.begin(); p != patch.end(); ++p)
-		{
-			visited[*p] = true;
+	{
+		//This is tricky! We'll recursivelly push things to
+		//the vector 'patch', but in a first step we want to push
+		//the neighbours of everyone inside 'patch', and in the
+		//second step do the same, over the old and the recently
+		//added elements, and the same for the i-th step (like a 
+		//fixed-point procedure). 
+		//For this, we must fix the number of iterations
+		//we'll do, and that's why we store the size of the patch (sz)
+		//outside the FOR loop (if we used patch.size() inside the FOR
+		//loop, every iteration it would grow indefinitely until we
+		//covered the whole graph).
+		int sz = patch.size();
+		for(int p = 0; p < sz; p++)
+		{			
+			//retrieve element. Keep in mind p is an indice,
+			//P is the actual element!
+			int P = patch[p];
 
-			unprocessed.erase(*p);
+			//skip if this element was already visited
+			if( visited[P] & VISITED ) continue;
+			visited[P] |= VISITED;
 
-			const Node& N = nodes[ *p ];
+			const Node& N = nodes[P];
+
 			for(int j = 0; j < N.n_incident_faces(); j++)
 			{
 				int n1 = N.get_face(j).first;
 				int n2 = N.get_face(j).second;
 
-				if( !visited[n1] ) patch.push_back( n1 );
-				if( !visited[n2] ) patch.push_back( n2 );
+				//if n1 or n2 were not pushed to the list yet, push it
+				//to the patch and remove from ranked_points.
+				//Notice we don't do ranked_points.erase(P)
+				//because we already remove them in these if
+				//statements (and point_id will be removed in
+				//the main loop, in feature_points() ).
+				if( !(visited[n1] & IN_LIST) ) 
+				{
+					ranked_points.erase( n1 );
+					patch.push_back( n1 );
+					visited[n1] |= IN_LIST;
+				}
+
+				if( !(visited[n2] & IN_LIST) ) 
+				{
+					ranked_points.erase( n2 );
+					patch.push_back( n2 );
+					visited[n2] |= IN_LIST;
+				}
 			}
 		}
+	}
+
+	delete[] visited;
 
 	//push to patch and return
+	return Patch(patch);
 }
 
 //-----------------------------------------------------
@@ -270,59 +319,44 @@ void Graph::feature_points(const UnionFind& uf, std::vector<unsigned int>& featu
 		get_contour_from_cluster(this->nodes, *region, contour);
 
 		//rank points according to distance from border: expand in breadth
-		//and stop when the first contour point is found. Store it with the
-		//distance info.
-		std::vector<std::pair<int,int> > ranked_points;
+		//and stop when the first contour point is found. 
+		//We store the distances in the map G_DISTANCES, and our set of
+		//ranked points automatically sort the points acording to these stored distances.
+		std::set<int,comp_func> ranked_points( &comp_by_distance ); 
+		
 		for(auto p = region->begin(); p != region->end(); ++p)
 		{
 			int dist_p = expand_node_in_breadth(this->nodes, contour, *p);
-			ranked_points.push_back( std::pair<int,int>(*p, dist_p) );
+
+			//Avoid degenerated pairs (distance = -1).			
+			if(dist_p < 0) continue;
+
+			G_DISTANCES.insert( std::pair<int,int>(*p, dist_p) );
+			ranked_points.insert( *p );
 		}
 
-		//sort
-		std::sort(ranked_points.begin(), ranked_points.end(), comp_ranked_point);
-
 		//expand each point until the border is reached; the collected points
-		//in this process are the final patches we'll use as feature points.
-		//Do this in order until we cover the whole region.
-		std::set<int> unprocessed;
-		for(int i = 0; i < this->nodes.size(); i++) unprocessed.insert(i);
-
+		//in this process makes up the final patches we'll use to compute
+		//feature points.
+		//As ranked_points is a binary search tree ordered by distance (as we
+		//defined in ranked_point declaration), at each step we take the first
+		//element (i.e. the greatest), generate the patch, then we remove it.
+		//In the next iteration we'll have the second largest element in the
+		//first position.
 		int point_index = 0;
-		while(!unprocessed.empty())
+		while(!ranked_points.empty())
 		{
 			//expand points which are furthest from the contour
-			//until we cover the entire region.
-			//TODO: PATCH should be able to capture r-values by use of move semantics in the =operator
-			Patch final_path = generate_patch(this->nodes, unprocessed, ranked_points[point_index].first, ranked_points[point_index].second);
+			//until we cover the entire region. generate_patch will
+			//remove all nodes from ranked_points which were clustered into a patch.
 
-			//get next -> PROBLEM: we need to remove from ranked_points the points
-			//we processed in generate_patch!
-			point_index++;
+			//TODO: PATCH should be able to capture r-values by use of move semantics in the =operator
+			Patch final_path = generate_patch(this->nodes, ranked_points, *ranked_points.begin());
+
+			//remove point from tree
+			ranked_points.erase( ranked_points.begin() );
 		}
 
 	}
-
-
-	/* Step 0: generate clusters of points
-	 * Step 1: select a continuous region of surface points with same type
-	 * Step 2: rank all region points according to their distance from
-	 *			from the region contour and select those with the maximum
-	 *			distance as seed points. <<<<< VERY IMPORTANT
-	 * Step 3: expand each seed point uniformly to all directions along the surface
-	 * 			until the region contour is reached.
-
-	We must create a structure to hold each feature point, which is in fact the seed
-	with all the points in neighbourhood. Feature point will be used by the descriptor
-
-	how to define which points lie on the countour?
-		-> points fully inside the region are such that ALL of its immediate neighbours
-			do lie in the same region. The points of the contour are the ones which
-			are not fully inside the region.
-
-	how to rank the points according to distance?
-		-> expand in breadth and stop when the first contour point is find. Store it
-			with the distance info
-	*/
 }
 

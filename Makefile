@@ -3,8 +3,8 @@ CFLAGS = -g -O0 -std=c++11
 CLIBS = -lm
 EXEC = keypoints
 
-all: graph.o fileio.o unionfind.o node.o linalg.o
-		$(CC) $(CFLAGS) $(CLIBS) linalg.o node.o unionfind.o fileio.o graph.o -o $(EXEC) main.cpp
+all: graph.o fileio.o unionfind.o node.o linalg.o patch.o
+		$(CC) $(CFLAGS) $(CLIBS) patch.o linalg.o node.o unionfind.o fileio.o graph.o -o $(EXEC) main.cpp
 		make clean
 
 graph.o: src/graph/graph.cpp
@@ -21,6 +21,9 @@ unionfind.o: src/util/unionfind.cpp
 
 linalg.o: src/math/linalg.cpp
 		$(CC) $(CFLAGS) $(CLIBS) -c src/math/linalg.cpp	
+
+patch.o: src/graph/patch.cpp
+		$(CC) $(CFLAGS) $(CLIBS) -c src/graph/patch.cpp
 
 clean:
 	rm *.o
