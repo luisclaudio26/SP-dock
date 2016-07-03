@@ -7,6 +7,7 @@
 #include <set>
 #include <queue>
 #include <map>
+#include <list>
 #include <algorithm>
 
 #include <iostream>
@@ -138,7 +139,7 @@ static int expand_node_in_breadth(const std::vector<Node>& nodes, const std::set
 	return -1;
 }
 
-static Patch generate_patch(const std::vector<Node>& nodes, std::set<int,comp_func>& ranked_points, int point_id)
+static Patch generate_patch(const std::vector<Node>& nodes, std::list<int>& ranked_points, int point_id)
 {
 	char *visited = new char[nodes.size()]; 	
 	memset(visited, 0, sizeof(char)*nodes.size());
@@ -189,14 +190,14 @@ static Patch generate_patch(const std::vector<Node>& nodes, std::set<int,comp_fu
 				//the main loop, in feature_points() ).
 				if( !(visited[n1] & IN_LIST) ) 
 				{
-					ranked_points.erase( n1 );
+					ranked_points.remove( n1 );
 					patch.push_back( n1 );
 					visited[n1] |= IN_LIST;
 				}
 
 				if( !(visited[n2] & IN_LIST) ) 
 				{
-					ranked_points.erase( n2 );
+					ranked_points.remove( n2 );
 					patch.push_back( n2 );
 					visited[n2] |= IN_LIST;
 				}
@@ -322,7 +323,7 @@ void Graph::feature_points(const UnionFind& uf, std::vector<unsigned int>& featu
 		//and stop when the first contour point is found. 
 		//We store the distances in the map G_DISTANCES, and our set of
 		//ranked points automatically sort the points acording to these stored distances.
-		std::set<int,comp_func> ranked_points( &comp_by_distance ); 
+		std::list<int> ranked_points; 
 		
 		for(auto p = region->begin(); p != region->end(); ++p)
 		{
@@ -332,8 +333,11 @@ void Graph::feature_points(const UnionFind& uf, std::vector<unsigned int>& featu
 			if(dist_p < 0) continue;
 
 			G_DISTANCES.insert( std::pair<int,int>(*p, dist_p) );
-			ranked_points.insert( *p );
+			ranked_points.push_back( *p );
 		}
+
+		//sort points by distance
+		ranked_points.sort( comp_by_distance );
 
 		//expand each point until the border is reached; the collected points
 		//in this process makes up the final patches we'll use to compute
