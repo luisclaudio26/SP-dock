@@ -37,7 +37,7 @@ int main(int argc, char** args)
 	mesh_graph.feature_points(uf, feature_points);
 
 	//visualize mesh
-	Render::draw_mesh( mesh_graph );
+	Render::instance()->draw_mesh( mesh_graph );
 
 	//From here on, describe point, group-based matching,
 	//ICP, scoring, etc.

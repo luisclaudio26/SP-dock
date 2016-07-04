@@ -1,10 +1,12 @@
 CC = g++
 CFLAGS = -g -O0 -std=c++11
 CLIBS = -lm
+CGL = -lGL -lglfw -lGLEW
+CINC = -I /usr/include/GLFW
 EXEC = keypoints
 
 all: graph.o fileio.o unionfind.o node.o linalg.o patch.o render.o
-		$(CC) $(CFLAGS) $(CLIBS) patch.o linalg.o node.o unionfind.o fileio.o render.o graph.o -o $(EXEC) main.cpp
+		$(CC) $(CINC) $(CFLAGS) $(CLIBS) patch.o linalg.o node.o unionfind.o fileio.o render.o graph.o -o $(EXEC) main.cpp $(CGL)
 		make clean
 
 graph.o: src/graph/graph.cpp
@@ -26,7 +28,7 @@ patch.o: src/graph/patch.cpp
 		$(CC) $(CFLAGS) $(CLIBS) -c src/graph/patch.cpp
 
 render.o: src/visualization/render.cpp
-		$(CC) $(CLAGS) $(CLIBS) -c src/visualization/render.cpp
+		$(CC) $(CINC) $(CLAGS) $(CLIBS) -c src/visualization/render.cpp $(CGL)
 
 clean:
 	rm *.o

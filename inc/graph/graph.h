@@ -21,6 +21,9 @@ public:
 	void push_node(double x, double y, double z);
 	void push_triangular_face(int node, int adj1, int adj2);
 
+	//TODO: why isn't cbegin() working!?
+	std::vector<Node>::const_iterator get_nodes() { return nodes.begin(); }
+
 	//-------------------------------
 	//--------- Operations ----------
 	//-------------------------------
