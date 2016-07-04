@@ -306,7 +306,7 @@ void Graph::segment_by_curvature(UnionFind& uf)
 	delete[] visited;
 }
 
-void Graph::feature_points(const UnionFind& uf, std::vector<unsigned int>& feature)
+void Graph::feature_points(const UnionFind& uf, std::vector<Patch>& feature)
 {
 	//cluster points by convexity
 	std::vector< std::vector<int> > clusters;
@@ -355,10 +355,12 @@ void Graph::feature_points(const UnionFind& uf, std::vector<unsigned int>& featu
 			//remove all nodes from ranked_points which were clustered into a patch.
 
 			//TODO: PATCH should be able to capture r-values by use of move semantics in the =operator
-			Patch final_path = generate_patch(this->nodes, ranked_points, *ranked_points.begin());
+			Patch final_patch = generate_patch(this->nodes, ranked_points, *ranked_points.begin());
 
 			//remove point from tree
 			ranked_points.erase( ranked_points.begin() );
+
+			feature.push_back( final_patch );
 		}
 
 	}

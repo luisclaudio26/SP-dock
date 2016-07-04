@@ -4,6 +4,7 @@
 #include "./inc/graph/graph.h"
 #include "./inc/io/fileio.h"
 #include "./inc/util/unionfind.h"
+#include "./inc/visualization/render.h"
 
 //We need to embed some visualization system
 //to this so to know whether the point classification,
@@ -32,8 +33,11 @@ int main(int argc, char** args)
 
 	//Extract feature points by expanding points until we
 	//reach the borders
-	std::vector<unsigned int> feature_points;
+	std::vector<Patch> feature_points;
 	mesh_graph.feature_points(uf, feature_points);
+
+	//visualize mesh
+	Render::draw_mesh( mesh_graph );
 
 	//From here on, describe point, group-based matching,
 	//ICP, scoring, etc.

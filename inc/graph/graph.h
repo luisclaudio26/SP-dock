@@ -4,6 +4,7 @@
 #include <vector>
 #include "node.h"
 #include "../util/unionfind.h"
+#include "./patch.h"
 
 class Graph
 {
@@ -28,7 +29,7 @@ public:
 	void compute_curvatures();
 	void classify_points();
 	void segment_by_curvature(UnionFind& uf);
-	void feature_points(const UnionFind& uf, std::vector<unsigned int>& feature);
+	void feature_points(const UnionFind& uf, std::vector<Patch>& feature);
 
 	//--------------------------------
 	//-------- Debugging ops ---------
