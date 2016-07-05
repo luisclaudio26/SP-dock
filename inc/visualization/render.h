@@ -18,6 +18,7 @@ private:
 	//--------- internal operations ----------
 	//----------------------------------------
 	void setup_window();
+	void terminate_rendering();
 
 public:
 	static Render* instance() {

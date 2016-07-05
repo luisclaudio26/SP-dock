@@ -7,6 +7,11 @@ Render* Render::instance_ptr = 0;
 
 Render::Render()
 {
+
+}
+
+void Render::setup_window()
+{
 	//This will setup a new window and OpenGL context.
 	//GLFW or GLUT may be used for this kind of stuff.
 	glfwInit();
@@ -36,12 +41,29 @@ Render::Render()
 	glDepthFunc(GL_LESS);
 }
 
-void Render::setup_window()
+void Render::terminate_rendering()
 {
-
+	glfwTerminate();
 }
+
 
 void Render::draw_mesh(const Graph& mesh)
 {
 	this->setup_window();
+
+	//main loop
+	do
+	{
+		//Clear screen -> this function also clears stencil and depth buffer
+		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+		//Swap buffer and query events
+		glfwSwapBuffers(this->window);
+		glfwPollEvents();
+
+	} while(glfwGetKey(this->window, GLFW_KEY_ESCAPE) != GLFW_PRESS && 
+			!glfwWindowShouldClose(this->window));
+
+	//clean everything
+	this->terminate_rendering();
 }
