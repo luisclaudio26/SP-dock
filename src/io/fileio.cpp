@@ -17,7 +17,10 @@ static void load_vertex(std::string line, Graph& g)
 	double x, y, z;
 	ss>>x>>y>>z;
 
-	g.push_node(x, y, z);
+	double nx, ny, nz;
+	ss>>nx>>ny>>nz;
+
+	g.push_node(x, y, z, nx, ny, nz);
 }
 
 static void load_vertice(std::string vert, Graph& g)

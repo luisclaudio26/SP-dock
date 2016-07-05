@@ -51,6 +51,14 @@ void Render::draw_mesh(const Graph& mesh)
 {
 	this->setup_window();
 
+	//load node info
+
+	//load face info
+
+	//load everything into data buffer
+
+	//load uniforms
+
 	//main loop
 	do
 	{

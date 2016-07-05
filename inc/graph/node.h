@@ -10,7 +10,7 @@
 class Node
 {
 private:
-	glm::dvec3 pos, curvature;
+	glm::dvec3 pos, curvature, normal;
 	Convexity type;
 
 	//We store the indices to the neighbours
@@ -18,13 +18,14 @@ private:
 
 public:
 	Node();
-	Node(const glm::dvec3& pos);
+	Node(const glm::dvec3& pos, const glm::dvec3& normal);
 
 	//-----------------------------------
 	//--------- Access methods ----------
 	//-----------------------------------
 	glm::dvec3 get_curvature() const { return this->curvature; }
 	glm::dvec3 get_pos() const { return this->pos; }
+	glm::dvec3 get_normal() const { return this->normal; }
 	Convexity get_type() const { return this->type; }
 
 	int n_incident_faces() const { return ngbr.size(); }

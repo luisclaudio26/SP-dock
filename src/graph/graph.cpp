@@ -214,9 +214,9 @@ static Patch generate_patch(const std::vector<Node>& nodes, std::list<int>& rank
 //-----------------------------------------------------
 //------------------- FROM GRAPH.H --------------------
 //-----------------------------------------------------
-void Graph::push_node(double x, double y, double z)
+void Graph::push_node(double x, double y, double z, double nx, double ny, double nz)
 {
-	this->nodes.push_back( Node( glm::dvec3(x,y,z) ) );
+	this->nodes.push_back( Node( glm::dvec3(x,y,z), glm::dvec3(nx, ny, nz) ) );
 }
 
 void Graph::push_triangular_face(int node, int adj1, int adj2)

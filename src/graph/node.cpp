@@ -7,9 +7,10 @@ Node::Node()
 	
 }
 
-Node::Node(const glm::dvec3& pos)
+Node::Node(const glm::dvec3& pos, const glm::dvec3& normal)
 {
 	this->pos = pos;
+	this->normal = normal;
 }
 
 void Node::push_triangular_face(int adj1, int adj2)

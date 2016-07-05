@@ -18,7 +18,7 @@ public:
 	//---------------------------------
 	unsigned int size() { return nodes.size(); }
 
-	void push_node(double x, double y, double z);
+	void push_node(double x, double y, double z, double nx, double ny, double nz);
 	void push_triangular_face(int node, int adj1, int adj2);
 
 	//TODO: why isn't cbegin() working!?
