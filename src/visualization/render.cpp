@@ -5,17 +5,17 @@
 #include <vector>
 
 typedef struct {
-	float x, y, z;
-	float nx, ny, nz;
+	GLfloat x, y, z;
+	GLfloat nx, ny, nz;
 } Vertex;
 
 //Just to not have to type this behemoth in main draw_mesh
-#define NODE2VERTEX(n) ( (Vertex) { (float)n.get_pos()[0], \
-									(float)n.get_pos()[1], \
-									(float)n.get_pos()[2], \
-									(float)n.get_normal()[0], \
-									(float)n.get_normal()[1], \
-									(float)n.get_normal()[2] } )
+#define NODE2VERTEX(n) ( (Vertex) { (GLfloat)n.get_pos()[0], \
+									(GLfloat)n.get_pos()[1], \
+									(GLfloat)n.get_pos()[2], \
+									(GLfloat)n.get_normal()[0], \
+									(GLfloat)n.get_normal()[1], \
+									(GLfloat)n.get_normal()[2] } )
 
 //---------------------------------------
 //----------- From render.h -------------
@@ -101,7 +101,23 @@ void Render::draw_mesh(const Graph& mesh)
 				&vertice[0],
 				GL_STATIC_DRAW);
 
+	GLuint pos_id = glGetAttribLocation(shader_id, "pos");
+	glEnableVertexAttribArray(pos_id);
+	glVertexAttribPointer(pos_id,
+							3,				//3 floats per Pos element
+							GL_FLOAT,		//each element is a float
+							GL_FALSE,		//do normalize values
+							sizeof(Vertex), //displacement to next element
+							0);				//offset inside sizeof(Vertex) range
 
+	GLuint normal_id = glGetAttribLocation(shader_id, "normal");
+	glEnableVertexAttribArray(normal_id);
+	glVertexAttribPointer(normal_id,
+							3,
+							GL_FLOAT,
+							GL_TRUE,
+							sizeof(Vertex),
+							(GLvoid*) (3*sizeof(GL_FLOAT)) );
 
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
