@@ -6,12 +6,6 @@
 #include "./inc/util/unionfind.h"
 #include "./inc/visualization/render.h"
 
-//We need to embed some visualization system
-//to this so to know whether the point classification,
-//docking, etc. make sense. 
-//	-> Embed a simple renderer system with OpenGL,
-//		load the mesh triangles and render everything
-
 int main(int argc, char** args)
 {
 	std::string vertfile("./data/dummy.vert");

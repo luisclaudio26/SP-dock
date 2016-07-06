@@ -8,6 +8,9 @@ typedef struct {
 	float nx, ny, nz;
 } Vertex;
 
+//Just to not have to type this behemoth in main draw_mesh
+#define NODE2VERTEX(n) ((Vertex){n.get_pos()[0], n.get_pos()[1], n.get_pos()[2], n.get_normal()[0], n.get_normal()[1], n.get_normal()[2]})
+
 //---------------------------------------
 //----------- From render.h -------------
 //---------------------------------------
@@ -58,11 +61,22 @@ void Render::draw_mesh(const Graph& mesh)
 {
 	//this->setup_window();
 
-	//data
+	//pack mesh data into vertex buffer
 	std::vector<Vertex> vertice;
 	const std::vector<Node>& nodes = mesh.get_nodes();
+	const std::vector<Face>& faces = mesh.get_faces();
 
-	//load everything into data buffer
+	std::vector<Face>::const_iterator f = faces.begin();
+	for( ; f != faces.end(); ++f )
+	{
+		const Node &f1 = nodes[f->a], 
+					&f2 = nodes[f->b], 
+					&f3 = nodes[f->c];
+	
+		vertice.push_back( NODE2VERTEX(f1) );
+		vertice.push_back( NODE2VERTEX(f2) );
+		vertice.push_back( NODE2VERTEX(f3) );
+	}
 
 	//load uniforms
 

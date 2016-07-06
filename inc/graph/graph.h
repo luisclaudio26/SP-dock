@@ -28,6 +28,7 @@ public:
 
 	//TODO: why isn't cbegin() working!?
 	const std::vector<Node>& get_nodes() const { return nodes; }
+	const std::vector<Face>& get_faces() const { return faces; }
 
 	//-------------------------------
 	//--------- Operations ----------
