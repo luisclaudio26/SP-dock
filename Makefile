@@ -28,7 +28,7 @@ patch.o: src/graph/patch.cpp
 		$(CC) $(CFLAGS) $(CLIBS) -c src/graph/patch.cpp
 
 render.o: src/visualization/render.cpp
-		$(CC) $(CINC) $(CLAGS) $(CLIBS) -c src/visualization/render.cpp $(CGL)
+		$(CC) $(CINC) $(CFLAGS) $(CLIBS) -c src/visualization/render.cpp $(CGL)
 
 clean:
 	rm *.o
