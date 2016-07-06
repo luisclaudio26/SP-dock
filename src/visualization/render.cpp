@@ -1,4 +1,5 @@
 #include "../../inc/visualization/render.h"
+#include "../../inc/visualization/shader_loader.h"
 
 #include <iostream>
 #include <vector>
@@ -9,7 +10,12 @@ typedef struct {
 } Vertex;
 
 //Just to not have to type this behemoth in main draw_mesh
-#define NODE2VERTEX(n) ((Vertex){n.get_pos()[0], n.get_pos()[1], n.get_pos()[2], n.get_normal()[0], n.get_normal()[1], n.get_normal()[2]})
+#define NODE2VERTEX(n) ( (Vertex) { (float)n.get_pos()[0], \
+									(float)n.get_pos()[1], \
+									(float)n.get_pos()[2], \
+									(float)n.get_normal()[0], \
+									(float)n.get_normal()[1], \
+									(float)n.get_normal()[2] } )
 
 //---------------------------------------
 //----------- From render.h -------------
@@ -59,7 +65,10 @@ void Render::terminate_rendering()
 
 void Render::draw_mesh(const Graph& mesh)
 {
-	//this->setup_window();
+	this->setup_window();
+
+	//load shader program
+	GLuint shader_id = ShaderLoader::load("./shaders/flat");
 
 	//pack mesh data into vertex buffer
 	std::vector<Vertex> vertice;
@@ -78,11 +87,31 @@ void Render::draw_mesh(const Graph& mesh)
 		vertice.push_back( NODE2VERTEX(f3) );
 	}
 
+	//load data
+	GLuint vertex_array_id;
+	glGenVertexArrays(1, &vertex_array_id);
+	glBindVertexArray(vertex_array_id);
+
+	GLuint vertex_buffer_id;
+	glGenBuffers(1, &vertex_buffer_id);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_id);
+
+	glBufferData(GL_ARRAY_BUFFER,
+				vertice.size()*sizeof(Vertex),
+				&vertice[0],
+				GL_STATIC_DRAW);
+
+
+
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
 	//load uniforms
 
 	//main loop
 	
-	/*
+	
 	do
 	{
 		//Clear screen -> this function also clears stencil and depth buffer
@@ -93,8 +122,8 @@ void Render::draw_mesh(const Graph& mesh)
 		glfwPollEvents();
 
 	} while(glfwGetKey(this->window, GLFW_KEY_ESCAPE) != GLFW_PRESS && 
-			!glfwWindowShouldClose(this->window)); */
+			!glfwWindowShouldClose(this->window));
 
 	//clean everything
-	//this->terminate_rendering();
+	this->terminate_rendering();
 }
