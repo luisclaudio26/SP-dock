@@ -6,23 +6,28 @@
 #include "../util/unionfind.h"
 #include "./patch.h"
 
+typedef struct {
+	int a, b, c;
+} Face;
+
 class Graph
 {
 private:
 	std::vector<Node> nodes;
+	std::vector<Face> faces; //Used for rendering only (so far)
 
 public:
 
 	//---------------------------------
 	//--------- Access method ---------
 	//---------------------------------
-	unsigned int size() { return nodes.size(); }
+	unsigned int size() const { return nodes.size(); }
 
 	void push_node(double x, double y, double z, double nx, double ny, double nz);
-	void push_triangular_face(int node, int adj1, int adj2);
+	void push_face(int a, int b, int c);
 
 	//TODO: why isn't cbegin() working!?
-	std::vector<Node>::const_iterator get_nodes() { return nodes.begin(); }
+	const std::vector<Node>& get_nodes() const { return nodes; }
 
 	//-------------------------------
 	//--------- Operations ----------

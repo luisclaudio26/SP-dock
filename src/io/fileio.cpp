@@ -55,9 +55,7 @@ static void load_edge(std::string line, Graph& g)
 	//Indexes inside file are 1-index based
 	v1--; v2--; v3--;
 
-	g.push_triangular_face(v1, v2, v3);
-	g.push_triangular_face(v2, v1, v3);
-	g.push_triangular_face(v3, v1, v2);
+	g.push_face(v1, v2, v3);
 }
 
 static void load_edges(std::string face, Graph& g)

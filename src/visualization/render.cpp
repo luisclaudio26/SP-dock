@@ -1,5 +1,13 @@
 #include "../../inc/visualization/render.h"
 
+#include <iostream>
+#include <vector>
+
+typedef struct {
+	float x, y, z;
+	float nx, ny, nz;
+} Vertex;
+
 //---------------------------------------
 //----------- From render.h -------------
 //---------------------------------------
@@ -46,20 +54,21 @@ void Render::terminate_rendering()
 	glfwTerminate();
 }
 
-
 void Render::draw_mesh(const Graph& mesh)
 {
-	this->setup_window();
+	//this->setup_window();
 
-	//load node info
-
-	//load face info
+	//data
+	std::vector<Vertex> vertice;
+	const std::vector<Node>& nodes = mesh.get_nodes();
 
 	//load everything into data buffer
 
 	//load uniforms
 
 	//main loop
+	
+	/*
 	do
 	{
 		//Clear screen -> this function also clears stencil and depth buffer
@@ -70,8 +79,8 @@ void Render::draw_mesh(const Graph& mesh)
 		glfwPollEvents();
 
 	} while(glfwGetKey(this->window, GLFW_KEY_ESCAPE) != GLFW_PRESS && 
-			!glfwWindowShouldClose(this->window));
+			!glfwWindowShouldClose(this->window)); */
 
 	//clean everything
-	this->terminate_rendering();
+	//this->terminate_rendering();
 }

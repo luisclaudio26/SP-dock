@@ -219,9 +219,13 @@ void Graph::push_node(double x, double y, double z, double nx, double ny, double
 	this->nodes.push_back( Node( glm::dvec3(x,y,z), glm::dvec3(nx, ny, nz) ) );
 }
 
-void Graph::push_triangular_face(int node, int adj1, int adj2)
+void Graph::push_face(int a, int b, int c)
 {
-	this->nodes[node].push_triangular_face(adj1, adj2);
+	this->nodes[a].push_triangular_face(b, c);
+	this->nodes[b].push_triangular_face(a, c);
+	this->nodes[c].push_triangular_face(a, b);
+
+	this->faces.push_back( (Face){a,b,c} );
 }
 
 std::string Graph::graph2str()

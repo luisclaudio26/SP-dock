@@ -28,6 +28,7 @@ public:
 	glm::dvec3 get_normal() const { return this->normal; }
 	Convexity get_type() const { return this->type; }
 
+	//TODO: change this for a function returning a const std::vector<>&
 	int n_incident_faces() const { return ngbr.size(); }
 	std::pair<int,int> get_face(int index) const;
 
@@ -43,7 +44,7 @@ public:
 	//--------------------------------
 	//-------- Debugging ops ---------
 	//--------------------------------
-	std::string node2str();
+	std::string node2str() const;
 };
 
 #endif

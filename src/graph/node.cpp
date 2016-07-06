@@ -31,15 +31,15 @@ std::pair<int,int> Node::get_face(int index) const
 }
 
 
-std::string Node::node2str()
+std::string Node::node2str() const
 {
 	std::stringstream ss;
 
-	ss<<"Node[ Pos = ("<<pos.x<<", "<<pos.y<<", "<<pos.z<<"), ";
+	ss<<"Node[ Pos = ("<<pos.x<<", "<<pos.y<<", "<<pos.z<<"), Normal = ("<<normal.x<<", "<<normal.y<<", "<<normal.z<<") ";
 	ss<<" Curvature = ("<<curvature.x<<", "<<curvature.y<<", "<<curvature.z<<") ["<<this->type<<"] -> adj: ";
 	
-	for(auto it = ngbr.begin(); it != ngbr.end(); ++it)
-		ss<<"("<<it->first<<", "<<it->second<<"), ";
+	for(auto f : this->ngbr)
+		ss<<"("<<f.first<<", "<<f.second<<"), ";
 	
 	ss<<"]";
 
