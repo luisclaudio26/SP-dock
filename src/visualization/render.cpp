@@ -1,6 +1,7 @@
 #include "../../inc/visualization/render.h"
 #include "../../inc/visualization/shader_loader.h"
 
+#include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <vector>
 
@@ -124,14 +125,30 @@ void Render::draw_mesh(const Graph& mesh)
 	glBindVertexArray(0);
 
 	//load uniforms
+	glm::mat4 view = glm::lookAt( glm::vec3(3.0f, 3.0f, 3.0f), 
+									glm::vec3(0.0f, 0.0f, 0.0f),
+									glm::vec3(0.0f, 1.0f, 0.0f) );
 
+	glm::mat4 projection = glm::perspective(glm::radians(45.0f), 4.0f/3.0f, 0.5f, 6.0f);
+	glm::mat4 vp = projection * view;
+
+	GLuint vp_id = glGetUniformLocation(shader_id, "vp");
+	
 	//main loop
-	
-	
 	do
 	{
 		//Clear screen -> this function also clears stencil and depth buffer
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+		glUseProgram(shader_id);
+
+		glUniformMatrix4fv(vp_id, 1, GL_FALSE, &vp[0][0]);
+
+		glBindVertexArray(vertex_buffer_id);
+		glDrawArrays(GL_TRIANGLES, 0, vertice.size());
+		glBindVertexArray(0);
+
+		glUseProgram(0);
 
 		//Swap buffer and query events
 		glfwSwapBuffers(this->window);
