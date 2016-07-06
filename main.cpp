@@ -8,8 +8,8 @@
 
 int main(int argc, char** args)
 {
-	std::string vertfile("./data/dummy.vert");
-	std::string facefile("./data/dummy.face");
+	std::string vertfile("./data/test1.vert");
+	std::string facefile("./data/test1.face");
 
 	//Load molecular surface as generated from MSMS program
 	Graph mesh_graph;

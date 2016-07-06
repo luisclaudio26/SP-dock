@@ -24,5 +24,11 @@ void main()
 	//Apply Model-View-Projection matrix to vertice
 	gl_Position = vp * vec4(pos, 1.0);
 
-	vcolor = vec3(1.0f, 0.0f, 0.0f);
+	//light direction
+	vec3 light_dir = normalize( vec3(-1.0f, -1.0f, -1.0f) );
+
+	float spec_power = dot(-light_dir, normal);
+	spec_power = max(0.0, spec_power);
+
+	vcolor = vec3(0.0f, 0.2f, 0.0f) + vec3(1.0f,0.0f,0.0f)*spec_power;
 }

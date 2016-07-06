@@ -125,11 +125,11 @@ void Render::draw_mesh(const Graph& mesh)
 	glBindVertexArray(0);
 
 	//load uniforms
-	glm::mat4 view = glm::lookAt( glm::vec3(3.0f, 3.0f, 3.0f), 
-									glm::vec3(0.0f, 0.0f, 0.0f),
+	glm::mat4 view = glm::lookAt( glm::vec3(0.0f, 0.0f, 30.0f), 
+									glm::vec3(15.0f, 20.0f, 0.0f),
 									glm::vec3(0.0f, 1.0f, 0.0f) );
 
-	glm::mat4 projection = glm::perspective(glm::radians(45.0f), 4.0f/3.0f, 0.5f, 6.0f);
+	glm::mat4 projection = glm::perspective(glm::radians(45.0f), 4.0f/3.0f, 0.5f, 30.0f);
 	glm::mat4 vp = projection * view;
 
 	GLuint vp_id = glGetUniformLocation(shader_id, "vp");
