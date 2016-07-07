@@ -9,6 +9,8 @@
 #include <limits>
 #include <cmath>
 
+#define ROTATION_SPEED 0.008
+
 typedef struct {
 	glm::vec3 pos, normal, color;
 } Vertex;
@@ -53,7 +55,7 @@ static double get_max_coord(const Graph& mesh)
 	return max;
 }
 
-static void compute_viewprojection(const Graph& mesh, glm::mat4& vp)
+static void compute_viewprojection(const Graph& mesh, glm::mat4& vp, glm::dvec3& centroid_out)
 {
 	const std::vector<Node>& nodes = mesh.get_nodes();
 
@@ -62,7 +64,7 @@ static void compute_viewprojection(const Graph& mesh, glm::mat4& vp)
 	for( std::vector<Node>::const_iterator p = nodes.begin(); p != nodes.end(); ++p )
 		points.push_back( p->get_pos() );
 
- 	glm::dvec3 centroid = cloud_centroid(points);
+ 	glm::dvec3 centroid = centroid_out = cloud_centroid(points);
  	glm::dmat4 to_origin = glm::translate(glm::dmat4(1.0), -centroid);
 
  	//compute scale which fits the mesh inside a box with side equals to 2 units
@@ -192,18 +194,32 @@ void Render::draw_mesh(const Graph& mesh)
 	glBindVertexArray(0);
 
 	//compute uniform data
-	glm::mat4 vp; compute_viewprojection(mesh, vp);
+	glm::dvec3 centroid;
+
+	glm::mat4 vp; compute_viewprojection(mesh, vp, centroid);
 	GLuint vp_id = glGetUniformLocation(shader_id, "vp");
-	
+
+	//dumb animation
+	glm::mat4 t1, R, t2, model_mat; float angle = 0.0f;
+	GLuint model_id = glGetUniformLocation(shader_id, "model");
+	t1 = glm::translate(glm::mat4(1.0f), static_cast<glm::vec3>(-centroid));
+	t2 = glm::translate(glm::mat4(1.0f), static_cast<glm::vec3>(centroid));
+
 	//main loop
 	do
 	{
 		//Clear screen -> this function also clears stencil and depth buffer
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
+		//compute dumb animation rotation matrix
+		R = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
+		model_mat = t2 * R * t1; angle += ROTATION_SPEED;
+
+		//load parameters and draw stuff
 		glUseProgram(shader_id);
 
 		glUniformMatrix4fv(vp_id, 1, GL_FALSE, &vp[0][0]);
+		glUniformMatrix4fv(model_id, 1, GL_FALSE, &model_mat[0][0]);
 
 		glBindVertexArray(vertex_buffer_id);
 		glDrawArrays(GL_TRIANGLES, 0, vertices.size());

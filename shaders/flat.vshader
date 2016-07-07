@@ -1,15 +1,7 @@
 #version 150
 
-struct _model {
-	//sends point from model to world space
-	mat4 transform;
-
-	//Intensity and color for diffuse, 
-	//ambient and specular components
-	float kD; vec3 cD;
-	float kA; vec3 cA;
-};
-//uniform _model model;
+//Model matrix
+uniform mat4 model;
 
 //View-projection matrix
 uniform mat4 vp;
@@ -23,7 +15,7 @@ flat out vec3 vcolor;
 void main() 
 {
 	//Apply Model-View-Projection matrix to vertice
-	gl_Position = vp * vec4(pos, 1.0);
+	gl_Position = vp * model * vec4(pos, 1.0);
 
 	//light direction
 	vec3 light_dir = normalize( vec3(-1.0f, -1.0f, -1.0f) );
