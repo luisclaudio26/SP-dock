@@ -86,9 +86,11 @@ static void compute_viewprojection(const Graph& mesh, glm::mat4& vp)
  	glm::dvec3 cam_pos = glm::dvec3( inv_T * glm::dvec4(0, 0, 2.5, 1.0) );
  	glm::dvec3 look_at = glm::dvec3( inv_T * glm::dvec4(0, 0, 0, 1.0) );
 
- 	//build final view-projection matrix
+ 	//build final view-projection matrix (that 3 came out from nowhere and I hope it will never
+ 	//crash. This "guarantees" the molecule will be within our field of vision -> remember we 
+ 	//multiplied extreme by 2.5 in the scaling operation).
  	glm::dmat4 view = glm::lookAt(cam_pos, look_at, glm::dvec3(0.0,1.0,0.0));
- 	glm::dmat4 projection = glm::perspective(glm::radians(45.0), 4.0/3.0, 0.5, 30.0);
+ 	glm::dmat4 projection = glm::perspective(glm::radians(45.0), 4.0/3.0, 0.5, 3*extreme);
 
  	std::cout<<glm::to_string(cam_pos)<<", "<<glm::to_string(look_at)<<std::endl;
 
@@ -152,7 +154,7 @@ void Render::draw_mesh(const Graph& mesh)
 	std::vector<Vertex> vertices;
 	pack_geometry_data(mesh, vertices);
 
-	//load data
+	//load mesh data
 	GLuint vertex_array_id;
 	glGenVertexArrays(1, &vertex_array_id);
 	glBindVertexArray(vertex_array_id);
@@ -188,15 +190,7 @@ void Render::draw_mesh(const Graph& mesh)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
-	//load uniforms
-	/*
-	glm::mat4 view = glm::lookAt( glm::vec3(0.0f, 0.0f, 30.0f), 
-									glm::vec3(15.0f, 20.0f, 0.0f),
-									glm::vec3(0.0f, 1.0f, 0.0f) );
-
-	glm::mat4 projection = glm::perspective(glm::radians(45.0f), 4.0f/3.0f, 0.5f, 30.0f);
-	glm::mat4 vp = projection * view;*/
-
+	//compute uniform data
 	glm::mat4 vp; compute_viewprojection(mesh, vp);
 	GLuint vp_id = glGetUniformLocation(shader_id, "vp");
 	
