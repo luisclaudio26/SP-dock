@@ -10,17 +10,11 @@
 #include <cmath>
 
 typedef struct {
-	GLfloat x, y, z;
-	GLfloat nx, ny, nz;
+	glm::vec3 pos, normal, color;
 } Vertex;
 
 //Just to not have to type this behemoth in main draw_mesh
-#define NODE2VERTEX(n) ( (Vertex) { (GLfloat)n.get_pos()[0], \
-									(GLfloat)n.get_pos()[1], \
-									(GLfloat)n.get_pos()[2], \
-									(GLfloat)n.get_normal()[0], \
-									(GLfloat)n.get_normal()[1], \
-									(GLfloat)n.get_normal()[2] } )
+#define NODE2VERTEX(n) ( (Vertex){n.get_pos(), n.get_normal(), n.get_color()} )
 
 //----------------------------------
 //----------- Internal -------------
@@ -78,21 +72,19 @@ static void compute_viewprojection(const Graph& mesh, glm::mat4& vp)
  	//final transformation
  	glm::dmat4 T = to_unit * to_origin;
 
- 	//Placing a camera at (0,0,2.5), looking at (0,0,0) and with FOV 45° gives
+ 	//Placing a camera at (0,0,1.5), looking at (0,0,0) and with FOV 45° gives
  	//us a nice picture of a box with side 2 placed at the origin. We build this
  	//camera, then we transform it to the space of our original mesh by multiplying
  	//it by T-¹.
  	glm::dmat4 inv_T = glm::inverse(T);
- 	glm::dvec3 cam_pos = glm::dvec3( inv_T * glm::dvec4(0, 0, 2.5, 1.0) );
+ 	glm::dvec3 cam_pos = glm::dvec3( inv_T * glm::dvec4(0, 0, 1.5, 1.0) );
  	glm::dvec3 look_at = glm::dvec3( inv_T * glm::dvec4(0, 0, 0, 1.0) );
 
  	//build final view-projection matrix (that 3 came out from nowhere and I hope it will never
  	//crash. This "guarantees" the molecule will be within our field of vision -> remember we 
- 	//multiplied extreme by 2.5 in the scaling operation).
+ 	//multiplied extreme by 1.5 in the scaling operation).
  	glm::dmat4 view = glm::lookAt(cam_pos, look_at, glm::dvec3(0.0,1.0,0.0));
- 	glm::dmat4 projection = glm::perspective(glm::radians(45.0), 4.0/3.0, 0.5, 3*extreme);
-
- 	std::cout<<glm::to_string(cam_pos)<<", "<<glm::to_string(look_at)<<std::endl;
+ 	glm::dmat4 projection = glm::perspective(glm::radians(45.0), 4.0/3.0, 0.5, 3.0*extreme);
 
  	vp = static_cast<glm::mat4>( projection * view );
 }
@@ -185,6 +177,15 @@ void Render::draw_mesh(const Graph& mesh)
 							GL_TRUE,
 							sizeof(Vertex),
 							(GLvoid*) (3*sizeof(GL_FLOAT)) );
+
+	GLuint color_id = glGetAttribLocation(shader_id, "color");
+	glEnableVertexAttribArray(color_id);
+	glVertexAttribPointer(color_id,
+							3,
+							GL_FLOAT,
+							GL_TRUE,
+							sizeof(Vertex),
+							(GLvoid*) (6*sizeof(GL_FLOAT)) );
 
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);

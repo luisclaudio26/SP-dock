@@ -16,6 +16,7 @@ uniform mat4 vp;
 
 in vec3 pos;
 in vec3 normal;
+in vec3 color;
 
 flat out vec3 vcolor;
 
@@ -30,5 +31,5 @@ void main()
 	float spec_power = dot(-light_dir, normal);
 	spec_power = max(0.0, spec_power);
 
-	vcolor = vec3(0.1f, 0.1f, 0.1f) + vec3(1.0f,1.0f,1.0f)*spec_power;
+	vcolor = color*(0.1f + spec_power);
 }
