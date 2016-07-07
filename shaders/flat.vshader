@@ -30,5 +30,5 @@ void main()
 	float spec_power = dot(-light_dir, normal);
 	spec_power = max(0.0, spec_power);
 
-	vcolor = vec3(0.0f, 0.2f, 0.0f) + vec3(1.0f,0.0f,0.0f)*spec_power;
+	vcolor = vec3(0.1f, 0.1f, 0.1f) + vec3(1.0f,1.0f,1.0f)*spec_power;
 }

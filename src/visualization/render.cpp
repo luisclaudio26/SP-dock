@@ -1,9 +1,13 @@
 #include "../../inc/visualization/render.h"
 #include "../../inc/visualization/shader_loader.h"
+#include "../../inc/math/linalg.h"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/string_cast.hpp>
 #include <iostream>
 #include <vector>
+#include <limits>
+#include <cmath>
 
 typedef struct {
 	GLfloat x, y, z;
@@ -17,6 +21,79 @@ typedef struct {
 									(GLfloat)n.get_normal()[0], \
 									(GLfloat)n.get_normal()[1], \
 									(GLfloat)n.get_normal()[2] } )
+
+//----------------------------------
+//----------- Internal -------------
+//----------------------------------
+static void pack_geometry_data(const Graph& in, std::vector<Vertex>& out)
+{
+	//pack mesh data into vertex buffer
+	const std::vector<Node>& nodes = in.get_nodes();
+	const std::vector<Face>& faces = in.get_faces();
+
+	std::vector<Face>::const_iterator f = faces.begin();
+	for( ; f != faces.end(); ++f )
+	{
+		//pack data
+		const Node &f1 = nodes[f->a], 
+					&f2 = nodes[f->b], 
+					&f3 = nodes[f->c];
+	
+		out.push_back( NODE2VERTEX(f1) );
+		out.push_back( NODE2VERTEX(f2) );
+		out.push_back( NODE2VERTEX(f3) );
+	}
+}
+
+static double get_max_coord(const Graph& mesh)
+{
+	double max = std::numeric_limits<double>::lowest();
+
+	const std::vector<Node>& nodes = mesh.get_nodes();
+	
+	std::vector<Node>::const_iterator n = nodes.begin();
+	for( ; n != nodes.end(); ++n)
+		for(int i = 0; i < 3; i++)
+			if( glm::abs(n->get_pos()[i]) > max ) max = glm::abs( n->get_pos()[i] );
+
+	return max;
+}
+
+static void compute_viewprojection(const Graph& mesh, glm::mat4& vp)
+{
+	const std::vector<Node>& nodes = mesh.get_nodes();
+
+	//compute translation which sends the centroid of the mesh to the origin
+	std::vector<glm::dvec3> points;
+	for( std::vector<Node>::const_iterator p = nodes.begin(); p != nodes.end(); ++p )
+		points.push_back( p->get_pos() );
+
+ 	glm::dvec3 centroid = cloud_centroid(points);
+ 	glm::dmat4 to_origin = glm::translate(glm::dmat4(1.0), -centroid);
+
+ 	//compute scale which fits the mesh inside a box with side equals to 2 units
+ 	double extreme = get_max_coord(mesh);
+ 	glm::dmat4 to_unit = glm::scale(glm::dmat4(1.0), glm::dvec3(1.0/extreme) );
+
+ 	//final transformation
+ 	glm::dmat4 T = to_unit * to_origin;
+
+ 	//Placing a camera at (0,0,2.5), looking at (0,0,0) and with FOV 45° gives
+ 	//us a nice picture of a box with side 2 placed at the origin. We build this
+ 	//camera, then we transform it to the space of our original mesh by multiplying
+ 	//it by T-¹.
+ 	glm::dmat4 inv_T = glm::inverse(T);
+ 	glm::dvec3 cam_pos = glm::dvec3( inv_T * glm::dvec4(0, 0, 2.5, 1.0) );
+ 	glm::dvec3 look_at = glm::dvec3( inv_T * glm::dvec4(0, 0, 0, 1.0) );
+
+ 	//build final view-projection matrix
+ 	glm::dmat4 view = glm::lookAt(cam_pos, look_at, glm::dvec3(0.0,1.0,0.0));
+ 	glm::dmat4 projection = glm::perspective(glm::radians(45.0), 4.0/3.0, 0.5, 30.0);
+
+ 	std::cout<<glm::to_string(cam_pos)<<", "<<glm::to_string(look_at)<<std::endl;
+
+ 	vp = static_cast<glm::mat4>( projection * view );
+}
 
 //---------------------------------------
 //----------- From render.h -------------
@@ -71,22 +148,9 @@ void Render::draw_mesh(const Graph& mesh)
 	//load shader program
 	GLuint shader_id = ShaderLoader::load("./shaders/flat");
 
-	//pack mesh data into vertex buffer
-	std::vector<Vertex> vertice;
-	const std::vector<Node>& nodes = mesh.get_nodes();
-	const std::vector<Face>& faces = mesh.get_faces();
-
-	std::vector<Face>::const_iterator f = faces.begin();
-	for( ; f != faces.end(); ++f )
-	{
-		const Node &f1 = nodes[f->a], 
-					&f2 = nodes[f->b], 
-					&f3 = nodes[f->c];
-	
-		vertice.push_back( NODE2VERTEX(f1) );
-		vertice.push_back( NODE2VERTEX(f2) );
-		vertice.push_back( NODE2VERTEX(f3) );
-	}
+	//pack mesh data into buffer
+	std::vector<Vertex> vertices;
+	pack_geometry_data(mesh, vertices);
 
 	//load data
 	GLuint vertex_array_id;
@@ -98,8 +162,8 @@ void Render::draw_mesh(const Graph& mesh)
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_id);
 
 	glBufferData(GL_ARRAY_BUFFER,
-				vertice.size()*sizeof(Vertex),
-				&vertice[0],
+				vertices.size()*sizeof(Vertex),
+				&vertices[0],
 				GL_STATIC_DRAW);
 
 	GLuint pos_id = glGetAttribLocation(shader_id, "pos");
@@ -125,13 +189,15 @@ void Render::draw_mesh(const Graph& mesh)
 	glBindVertexArray(0);
 
 	//load uniforms
+	/*
 	glm::mat4 view = glm::lookAt( glm::vec3(0.0f, 0.0f, 30.0f), 
 									glm::vec3(15.0f, 20.0f, 0.0f),
 									glm::vec3(0.0f, 1.0f, 0.0f) );
 
 	glm::mat4 projection = glm::perspective(glm::radians(45.0f), 4.0f/3.0f, 0.5f, 30.0f);
-	glm::mat4 vp = projection * view;
+	glm::mat4 vp = projection * view;*/
 
+	glm::mat4 vp; compute_viewprojection(mesh, vp);
 	GLuint vp_id = glGetUniformLocation(shader_id, "vp");
 	
 	//main loop
@@ -145,7 +211,7 @@ void Render::draw_mesh(const Graph& mesh)
 		glUniformMatrix4fv(vp_id, 1, GL_FALSE, &vp[0][0]);
 
 		glBindVertexArray(vertex_buffer_id);
-		glDrawArrays(GL_TRIANGLES, 0, vertice.size());
+		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 		glBindVertexArray(0);
 
 		glUseProgram(0);
