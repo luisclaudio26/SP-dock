@@ -358,8 +358,12 @@ void Graph::feature_points(const UnionFind& uf, std::vector<Patch>& feature)
 			//until we cover the entire region. generate_patch will
 			//remove all nodes from ranked_points which were clustered into a patch.
 
+			//paint ranked point green
+			int point_id = *ranked_points.begin();
+			this->nodes[point_id].set_color( glm::vec3(0.0f, 0.0f, 1.0f) );
+
 			//TODO: PATCH should be able to capture r-values by use of move semantics in the =operator
-			Patch final_patch = generate_patch(this->nodes, ranked_points, *ranked_points.begin());
+			Patch final_patch = generate_patch(this->nodes, ranked_points, point_id);
 
 			//remove point from tree
 			ranked_points.erase( ranked_points.begin() );
