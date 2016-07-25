@@ -6,9 +6,13 @@
 class Patch
 {
 private:
-	std::vector<int> nodes;
+	
 
 public:
+
+	//temporarily make it public
+	std::vector<int> nodes;
+
 	Patch(const std::vector<int>& nodes);
 
 	std::vector<int> get_nodes() const {

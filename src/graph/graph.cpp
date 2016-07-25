@@ -29,6 +29,7 @@ typedef bool(*comp_func)(int,int);
 //-------------------------------------------------
 //------------------- INTERNAL --------------------
 //-------------------------------------------------
+//TEMPORARILY UNSET CONST QUALIFIERS FOR NODE!
 static void cluster_nodes_by_type(int current, bool visited[], const std::vector<Node>& nodes, UnionFind& UF)
 {
 	//if already visited, skip
@@ -351,19 +352,34 @@ void Graph::feature_points(const UnionFind& uf, std::vector<Patch>& feature)
 		//element (i.e. the greatest), generate the patch, then we remove it.
 		//In the next iteration we'll have the second largest element in the
 		//first position.
-		int point_index = 0;
+		int point_index = 0; int c = 0;
 		while(!ranked_points.empty())
 		{
 			//expand points which are furthest from the contour
 			//until we cover the entire region. generate_patch will
 			//remove all nodes from ranked_points which were clustered into a patch.
 
-			//paint ranked point green
 			int point_id = *ranked_points.begin();
-			this->nodes[point_id].set_color( glm::vec3(0.0f, 0.0f, 1.0f) );
 
 			//TODO: PATCH should be able to capture r-values by use of move semantics in the =operator
 			Patch final_patch = generate_patch(this->nodes, ranked_points, point_id);
+
+			//paint patch
+			for(auto it = final_patch.nodes.begin(); it != final_patch.nodes.end(); ++it)
+			{
+				float v = 1.0f;
+				switch(c)
+				{
+					case 0: this->nodes[*it].set_color( glm::vec3(0.0, v, 0.0) ); break;
+					case 1:	this->nodes[*it].set_color( glm::vec3(v, 0.0, 0.0) ); break;
+					case 2:	this->nodes[*it].set_color( glm::vec3(0.0, 0.0, v) ); break;
+				}
+			}
+
+			this->nodes[point_id].set_color( glm::vec3(1.0f, 0.0f, 1.0f) );
+
+			c++; if(c>2) c = 0;
+
 
 			//remove point from tree
 			ranked_points.erase( ranked_points.begin() );
