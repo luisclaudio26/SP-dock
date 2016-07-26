@@ -11,7 +11,7 @@ Node::Node(const glm::dvec3& pos, const glm::dvec3& normal)
 {
 	this->pos = pos;
 	this->normal = normal;
-	this->color = glm::vec3(1.0f, 0.0f, 0.0f);
+	this->color = glm::vec3(1.0f, 1.0f, 1.0f);
 }
 
 void Node::push_triangular_face(int adj1, int adj2)

@@ -1,0 +1,7 @@
+OBSERVAÇÕES:
+
+25 Julho 2016:
+
+1) Primeiros testes com o extrator de pontos de interesse. Aparentemente, há pontos de interesse DEMAIS: isso é reduzido aumentando a resolução da malha (segundo teste, com a mesma proteína e densidade 2.0, trouxe patches maiores), mas ainda assim há pontos de interesse demais e não dá para saber se eles são úteis para o docking.
+
+2) Teste com threshold para número de pontos num patch: aparentemente, cerca de 8~10 pontos por patch no mínimo gera patches que PARECEM representativos o suficiente e não são muito excessivos. Isso é só uma hipótese e só pode ser confirmada na hora do docking em si procurar as melhores conformações.

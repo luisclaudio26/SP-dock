@@ -27,7 +27,7 @@ public:
 	void push_face(int a, int b, int c);
 
 	//TODO: why isn't cbegin() working!?
-	const std::vector<Node>& get_nodes() const { return nodes; }
+	std::vector<Node>& get_nodes() { return nodes; }
 	const std::vector<Face>& get_faces() const { return faces; }
 
 	//-------------------------------
