@@ -2,6 +2,11 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <chrono>
+using std::chrono::milliseconds;
+using std::chrono::high_resolution_clock;
+using std::chrono::duration_cast;
+
 #include "./inc/graph/graph.h"
 #include "./inc/io/fileio.h"
 #include "./inc/util/unionfind.h"
@@ -24,29 +29,40 @@ int main(int argc, char** args)
 	FileIO::instance()->mesh_from_file(vertfile, facefile, mesh_graph);
 
 	//Compute curvature for each point in mesh
+	high_resolution_clock::time_point t_start = high_resolution_clock::now();
 	mesh_graph.compute_curvatures();
 
 	//classify each point as convex/concave/flat
+	high_resolution_clock::time_point t_classify = high_resolution_clock::now();
 	mesh_graph.classify_points();
 
 	//Get contiguous regions of convex/concave/flat points
+	high_resolution_clock::time_point t_segment = high_resolution_clock::now();
 	UnionFind uf( mesh_graph.size() );
 	mesh_graph.segment_by_curvature(uf);
 
 	//Extract feature points by expanding points until we
 	//reach the borders
+	high_resolution_clock::time_point t_featurepoints = high_resolution_clock::now();
 	std::vector<Patch> feature_points;
 	mesh_graph.feature_points(uf, feature_points);
 
+	//remove everyone below a certain threshold	
+	int points_before = feature_points.size();
 
-	//remove everyone below a certain threshold
-	std::cout<<"Patches before: "<<feature_points.size()<<std::endl;
-	
+	high_resolution_clock::time_point t_remove = high_resolution_clock::now();
+
+	int one_point_only = 0;
+	for(auto p = feature_points.begin(); p != feature_points.end(); ++p)
+		if( p->nodes.size() == 1 ) one_point_only++;
+
 	feature_points.erase( std::remove_if(feature_points.begin(), feature_points.end(), under_threshold), 
 							feature_points.end() );
 	
+	int points_after = feature_points.size();
 
-	std::cout<<"Patches after: "<<feature_points.size()<<std::endl;
+	//finish main processing
+	high_resolution_clock::time_point t_finish = high_resolution_clock::now();
 
 	//paint remaining patches
 	int c = 0;
@@ -66,12 +82,24 @@ int main(int argc, char** args)
 		c++; if(c>2) c = 0;	
 	}	
 
+	//print info
+	milliseconds curvatures_t = duration_cast<milliseconds>(t_classify - t_start);
+	milliseconds classify_t = duration_cast<milliseconds>(t_segment - t_classify);
+	milliseconds segment_t = duration_cast<milliseconds>(t_featurepoints - t_segment);
+	milliseconds featurepoints_t = duration_cast<milliseconds>(t_remove - t_featurepoints);
+	milliseconds removal_t = duration_cast<milliseconds>(t_finish - t_remove);
+
+	std::cout<<"Curvature computation time : "<<curvatures_t.count()<<" ms\n";
+	std::cout<<"Classification time : "<<classify_t.count()<<" ms\n";
+	std::cout<<"Segmentation time : "<<segment_t.count()<<" ms\n";
+	std::cout<<"Feature point extraction time : "<<featurepoints_t.count()<<" ms\n";
+	std::cout<<"Spurious point removal time : "<<removal_t.count()<<" ms\n\n";
+
+	std::cout<<"Patches before : "<<points_before<<", after filtering : "<<points_after<<std::endl;
+	std::cout<<"Number of patches with one point only : "<<one_point_only<<std::endl;
+
 	//visualize mesh
 	Render::instance()->draw_mesh( mesh_graph );
-
-	//From here on, describe point, group-based matching,
-	//ICP, scoring, etc.
-	//std::cout<<mesh_graph.graph2str()<<std::endl;
 
 	return 0;
 }
