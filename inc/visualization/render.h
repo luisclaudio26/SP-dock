@@ -30,7 +30,7 @@ public:
 	//------------------------------------------
 	//---------- external operations -----------
 	//------------------------------------------
-	void draw_mesh(const Graph& mesh);
+	void draw_mesh(Graph& mesh);
 };
 
 #endif

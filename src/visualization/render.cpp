@@ -21,10 +21,10 @@ typedef struct {
 //----------------------------------
 //----------- Internal -------------
 //----------------------------------
-static void pack_geometry_data(const Graph& in, std::vector<Vertex>& out)
+static void pack_geometry_data(Graph& in, std::vector<Vertex>& out)
 {
 	//pack mesh data into vertex buffer
-	const std::vector<Node>& nodes = in.get_nodes();
+	std::vector<Node>& nodes = in.get_nodes();
 	const std::vector<Face>& faces = in.get_faces();
 
 	std::vector<Face>::const_iterator f = faces.begin();
@@ -41,11 +41,11 @@ static void pack_geometry_data(const Graph& in, std::vector<Vertex>& out)
 	}
 }
 
-static double get_max_coord(const Graph& mesh)
+static double get_max_coord(Graph& mesh)
 {
 	double max = std::numeric_limits<double>::lowest();
 
-	const std::vector<Node>& nodes = mesh.get_nodes();
+	std::vector<Node>& nodes = mesh.get_nodes();
 	
 	std::vector<Node>::const_iterator n = nodes.begin();
 	for( ; n != nodes.end(); ++n)
@@ -55,9 +55,9 @@ static double get_max_coord(const Graph& mesh)
 	return max;
 }
 
-static void compute_viewprojection(const Graph& mesh, glm::mat4& vp, glm::dvec3& centroid_out)
+static void compute_viewprojection(Graph& mesh, glm::mat4& vp, glm::dvec3& centroid_out)
 {
-	const std::vector<Node>& nodes = mesh.get_nodes();
+	std::vector<Node>& nodes = mesh.get_nodes();
 
 	//compute translation which sends the centroid of the mesh to the origin
 	std::vector<glm::dvec3> points;
@@ -137,7 +137,7 @@ void Render::terminate_rendering()
 	glfwTerminate();
 }
 
-void Render::draw_mesh(const Graph& mesh)
+void Render::draw_mesh(Graph& mesh)
 {
 	this->setup_window();
 
