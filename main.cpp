@@ -89,6 +89,8 @@ int main(int argc, char** args)
 	milliseconds featurepoints_t = duration_cast<milliseconds>(t_remove - t_featurepoints);
 	milliseconds removal_t = duration_cast<milliseconds>(t_finish - t_remove);
 
+	std::cout<<"-------------------------------------------------------------------\n"<<std::endl;
+	std::cout<<"File: "<<fname<<std::endl<<std::endl;
 	std::cout<<"Curvature computation time : "<<curvatures_t.count()<<" ms\n";
 	std::cout<<"Classification time : "<<classify_t.count()<<" ms\n";
 	std::cout<<"Segmentation time : "<<segment_t.count()<<" ms\n";
@@ -97,6 +99,8 @@ int main(int argc, char** args)
 
 	std::cout<<"Patches before : "<<points_before<<", after filtering : "<<points_after<<std::endl;
 	std::cout<<"Number of patches with one point only : "<<one_point_only<<std::endl;
+	std::cout<<(points_before-points_after)*100.0f/points_before<<"\% of patches with < 10 points"<<std::endl;
+	std::cout<<(one_point_only)*100.0/points_before<<"\% of patches with one poine only\n"<<std::endl;
 
 	//visualize mesh
 	Render::instance()->draw_mesh( mesh_graph );
