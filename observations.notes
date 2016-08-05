@@ -5,3 +5,7 @@ OBSERVAÇÕES:
 1) Primeiros testes com o extrator de pontos de interesse. Aparentemente, há pontos de interesse DEMAIS: isso é reduzido aumentando a resolução da malha (segundo teste, com a mesma proteína e densidade 2.0, trouxe patches maiores), mas ainda assim há pontos de interesse demais e não dá para saber se eles são úteis para o docking.
 
 2) Teste com threshold para número de pontos num patch: aparentemente, cerca de 8~10 pontos por patch no mínimo gera patches que PARECEM representativos o suficiente e não são muito excessivos. Isso é só uma hipótese e só pode ser confirmada na hora do docking em si procurar as melhores conformações.
+
+3) Variar o raio da molécula probe afeta SIM a quantidade de patches com mais de 10 pontos achados, mas não tanto quanto a RESOLUÇÃO da malha.
+
+4) Por inspeção visual, moléculas que usam um probe MENOR (isto é, superfícies mais apertadas) geram pontos de interesse "melhores" (centro de áreas côncavas/convexas).
