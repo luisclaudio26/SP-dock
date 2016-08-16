@@ -41,5 +41,50 @@ int main(int argc, char** args)
 	//visualize mesh
 	Render::instance()->draw_mesh( mesh_graph );
 
+	//Experimento: compute o raio médio de um patch e a média de pontos
+	//
+	// A ideia é achar uma base do espaço centrada no ponto de interesse
+	// descrito, com o y alinhado com a normal do ponto. Daí, precisamos
+	// construir uma base. A daisy será centrado com o centro na origem,
+	// deitado nos plano X-Z.
+	// Projetamos então os pontos do patch no plano X-Z e medimos as coisas
+	// a partir daí.
+	// O raio da daisy coincide com a distância do ponto mais distante do centro
+	// depois que projetamos o patch no plano X-Z. Esse raio deve ser
+	// usado como informação no descritor final.
+	//
+	//
+	// O descritor deve conter:
+	// 	1) Flag Convexo/Côncavo: flag indicando se o patch é côncavo ou convexo.
+	//	2) Raio da daisy: raio (inteiro? float?) da daisy usada para descrever essa região.
+	//					  Essa informação codifica efetivamente o tamanho do patch.
+	//	3) Distância do ponto ao daisy: essa informação é efetivamente sua coordenada y.
+	//									Note que coordenadas negativas indicam que o patch
+	//									é côncavo e coordenadas positivas que o patch é
+	//									convexo. Em vez de armazenar o sinal, podemos
+	//									simplesmente armazenar um flag dizendo se é convexo
+	//									ou côncavo e armazenamos só o valor absoluto das coordenadas.
+	//
+	// A informação do raio é útil pois alguns patches de tamanhos diferentes podem ser encaixados
+	// ainda assim: por exemplo, um patch côncavo de raio grande pode se encaixar com um patch convexo
+	// de raio menor (mas não o contrário).
+	//
+	// Se as distâncias dos pontos à daisy são semelhantes, provavelmente o patch têm curvatura semelhante.
+	//
+	// Como achar a base? Temos a normal, precisamos de _ALGUM_ vetor perpendicular
+	// à normal. Mas qual? O ideal seria escolher de uma forma consistente, de forma
+	// que o mesmo patch rotacionado gerasse uma base rotacionada igual, de forma
+	// a ganhar invariância à rotação.
+	// Jeito Naïve:
+	// 	ax + by + cz = 0;
+	// 	x = y = 1, 	  a + b + cz = 0
+	//				  a + b = - cz
+	//				  (a + b)/z = -c
+	//			  	  -(a+b)/z = c
+	// 	Então, se a normal é o vetor N = [a b c], o vetor P = [1 1 -(a+b)/z].
+	// 	PROBLEMA: a divisão por Z pode causar muito erro numérico!
+	// 	PROBLEMA 2: não é invariante a rotação, porque o daisy vai pegar pontos
+	// 				diferentes dependendo da orientação dele.
+
 	return 0;
 }
