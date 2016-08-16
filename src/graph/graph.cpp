@@ -214,10 +214,14 @@ static Patch generate_patch(const std::vector<Node>& nodes, std::list<int>& rank
 }
 
 static bool under_threshold(const Patch& p) { return p.nodes.size() < PATCH_SIZE_THRESHOLD; }
-static void post_process_features(std::vector<Patch>& features)
+static void remove_spurious_patches(int threshold, std::vector<Patch>& features)
 {
 	//remove every region with number of points below a certain threshold
-	features.erase( std::remove_if(features.begin(), features.end(), under_threshold), features.end() );
+	auto thresh_func = [threshold](const Patch& p) -> bool { 
+							return p.nodes.size() < threshold; 
+						};
+
+	features.erase( std::remove_if(features.begin(), features.end(), thresh_func), features.end() );
 }
 
 static void paint_patches(std::vector<Node>& nodes, const std::vector<Patch>& features)
@@ -337,7 +341,7 @@ void Graph::segment_by_curvature(UnionFind& uf)
 	delete[] visited;
 }
 
-void Graph::feature_points(const UnionFind& uf, std::vector<Patch>& feature)
+void Graph::feature_points(const UnionFind& uf, std::vector<Patch>& feature, int patch_threshold)
 {
 	//cluster points by convexity
 	std::vector< std::vector<int> > clusters;
@@ -398,7 +402,7 @@ void Graph::feature_points(const UnionFind& uf, std::vector<Patch>& feature)
 	}
 
 	//post-process generated patches
-	post_process_features(feature);
+	remove_spurious_patches(patch_threshold, feature);
 
 	//paint patches
 	paint_patches(this->nodes, feature);
