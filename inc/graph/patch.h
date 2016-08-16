@@ -2,28 +2,21 @@
 #define _PATCH_H_
 
 #include <vector>
+#include <glm/glm.hpp>
+#include "./node.h"
 
 class Patch
 {
 private:
-	
-
-public:
-
-	//temporarily make it public
 	std::vector<int> nodes;
 
+public:
 	Patch(const std::vector<int>& nodes);
 
-	std::vector<int> get_nodes() const {
-		return this->nodes;
-	}
+	void paint_patch(std::vector<Node>& graph, const glm::vec3& color) const;
+
+	int patch_size() const { return nodes.size(); }
 	
-	//Don't if this is correct
-	void operator=(const Patch& p)
-	{
-		this->nodes = p.get_nodes();
-	}
 };
 
 #endif

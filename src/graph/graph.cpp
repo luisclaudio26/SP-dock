@@ -213,12 +213,11 @@ static Patch generate_patch(const std::vector<Node>& nodes, std::list<int>& rank
 	return Patch(patch);
 }
 
-static bool under_threshold(const Patch& p) { return p.nodes.size() < PATCH_SIZE_THRESHOLD; }
 static void remove_spurious_patches(int threshold, std::vector<Patch>& features)
 {
 	//remove every region with number of points below a certain threshold
 	auto thresh_func = [threshold](const Patch& p) -> bool { 
-							return p.nodes.size() < threshold; 
+							return p.patch_size() < threshold; 
 						};
 
 	features.erase( std::remove_if(features.begin(), features.end(), thresh_func), features.end() );
@@ -230,15 +229,19 @@ static void paint_patches(std::vector<Node>& nodes, const std::vector<Patch>& fe
 	int c = 0;
 	for(auto p = features.begin(); p != features.end(); ++p)
 	{
-		for(auto it = p->nodes.begin(); it != p->nodes.end(); ++it)
-			switch(c)
-			{
-				case 0: nodes[*it].set_color( glm::vec3(0.0f, 1.0f, 0.0f) ); break;
-				case 1:	nodes[*it].set_color( glm::vec3(1.0f, 0.0f, 0.0f) ); break;
-				case 2:	nodes[*it].set_color( glm::vec3(0.0f, 0.0f, 1.0f) ); break;
-			}
-	
-		c = c > 2 ? 0 : c + 1;
+		//Choose color for this patch. This is just to make easier
+		//to see adjacent patches.
+		glm::vec3 color = glm::vec3(0.4f, 0.4f, 0.4f);
+		switch(c)
+		{
+			case 0: color = glm::vec3(0.0f, 1.0f, 0.0f); break;
+			case 1:	color = glm::vec3(1.0f, 0.0f, 0.0f); break;
+			case 2:	color = glm::vec3(0.0f, 0.0f, 1.0f); break;
+		}
+		c = c >= 2 ? 0 : c + 1;
+
+
+		p->paint_patch( nodes, color );
 	}
 }	
 
