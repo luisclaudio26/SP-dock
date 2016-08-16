@@ -17,6 +17,8 @@ using std::endl;
 //-------------------------------------------------------------------
 //------------------- GLOBALS, DEFINES, TYPEDEFS --------------------
 //-------------------------------------------------------------------
+static int PATCH_SIZE_THRESHOLD = 8;
+
 static std::map<int,int> G_DISTANCES;
 static bool comp_by_distance(int rhs_node, int lhs_node) {
 	return G_DISTANCES[lhs_node] < G_DISTANCES[rhs_node];
@@ -29,7 +31,6 @@ typedef bool(*comp_func)(int,int);
 //-------------------------------------------------
 //------------------- INTERNAL --------------------
 //-------------------------------------------------
-//TEMPORARILY UNSET CONST QUALIFIERS FOR NODE!
 static void cluster_nodes_by_type(int current, bool visited[], const std::vector<Node>& nodes, UnionFind& UF)
 {
 	//if already visited, skip
@@ -212,6 +213,31 @@ static Patch generate_patch(const std::vector<Node>& nodes, std::list<int>& rank
 	return Patch(patch);
 }
 
+static bool under_threshold(const Patch& p) { return p.nodes.size() < PATCH_SIZE_THRESHOLD; }
+static void post_process_features(std::vector<Patch>& features)
+{
+	//remove every region with number of points below a certain threshold
+	features.erase( std::remove_if(features.begin(), features.end(), under_threshold), features.end() );
+}
+
+static void paint_patches(std::vector<Node>& nodes, const std::vector<Patch>& features)
+{
+	//paint remaining patches
+	int c = 0;
+	for(auto p = features.begin(); p != features.end(); ++p)
+	{
+		for(auto it = p->nodes.begin(); it != p->nodes.end(); ++it)
+			switch(c)
+			{
+				case 0: nodes[*it].set_color( glm::vec3(0.0f, 1.0f, 0.0f) ); break;
+				case 1:	nodes[*it].set_color( glm::vec3(1.0f, 0.0f, 0.0f) ); break;
+				case 2:	nodes[*it].set_color( glm::vec3(0.0f, 0.0f, 1.0f) ); break;
+			}
+	
+		c = c > 2 ? 0 : c + 1;
+	}
+}	
+
 //-----------------------------------------------------
 //------------------- FROM GRAPH.H --------------------
 //-----------------------------------------------------
@@ -369,7 +395,11 @@ void Graph::feature_points(const UnionFind& uf, std::vector<Patch>& feature)
 
 			feature.push_back( final_patch );
 		}
-
 	}
-}
 
+	//post-process generated patches
+	post_process_features(feature);
+
+	//paint patches
+	paint_patches(this->nodes, feature);
+}
