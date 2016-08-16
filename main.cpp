@@ -75,7 +75,8 @@ int main(int argc, char** args)
 	// à normal. Mas qual? O ideal seria escolher de uma forma consistente, de forma
 	// que o mesmo patch rotacionado gerasse uma base rotacionada igual, de forma
 	// a ganhar invariância à rotação.
-	// Jeito Naïve:
+	//
+	// Jeito Naïve: UPDATE -> ISSO NÃO FAZ SENTIDO POR CAUSA DO Z NO VETOR FINAL!
 	// 	ax + by + cz = 0;
 	// 	x = y = 1, 	  a + b + cz = 0
 	//				  a + b = - cz
@@ -85,6 +86,14 @@ int main(int argc, char** args)
 	// 	PROBLEMA: a divisão por Z pode causar muito erro numérico!
 	// 	PROBLEMA 2: não é invariante a rotação, porque o daisy vai pegar pontos
 	// 				diferentes dependendo da orientação dele.
-
+	//
+	// OBS. 1: Se o patch projetado fosse perfeitamente circular, então não importa a orientação da base:
+	//		   as distâncias computadas serão as mesmas. Isso significa que para orientar a base
+	//		   é preciso haver alguma irregularidade na base.
+	// Solução 1 : Orientar o segundo vetor a partir do vetor que vai do centro até o ponto mais distante.
+	// Solução 2 : Calcular a caixa envoltória (não alinhada com os eixos) para o patch. Defina x como
+	//				a dimensão maior da caixa e z como a dimensão menor. Isso deveria garantir invariância à rotação!
+	//			   Mas como calcular a caixa envoltória rapidamente?
+	// Solução 3 : Se em vez da caixa envoltória, usamos os autovetores com maiores autovalores? -> ANÁLISE DE COMPONENTE PRINCIPAL!
 	return 0;
 }
