@@ -4,6 +4,7 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include "./node.h"
+#include "../descriptor/descriptor.h"
 
 class Patch
 {
@@ -23,12 +24,9 @@ public:
 	//----------- OPERATIONS ------------
 	//-----------------------------------
 	//Temporarily void! Should return the descriptor
-	void compute_descriptor(const std::vector<Node>& points) const;
+	Descriptor compute_descriptor(const std::vector<Node>& points) const;
 
 	void paint_patch(std::vector<Node>& graph, const glm::vec3& color) const;
-
-
-	
 };
 
 #endif

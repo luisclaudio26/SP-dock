@@ -42,8 +42,9 @@ int main(int argc, char** args)
 	//Render::instance()->draw_mesh( mesh_graph );
 
 	//generate descriptors
+	std::vector<Descriptor> descriptors;
 	for(auto f = feature_points.begin(); f != feature_points.end(); ++f)
-		f->compute_descriptor( mesh_graph.get_nodes() );
+		descriptors.push_back( f->compute_descriptor( mesh_graph.get_nodes() ) );
 
 	//Experimento: compute o raio médio de um patch e a média de pontos
 	//
