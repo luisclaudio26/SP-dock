@@ -1,4 +1,5 @@
 #include "../../inc/graph/patch.h"
+#include "../../inc/math/linalg.h"
 
 #include <cstdio>
 #include <gsl/gsl_math.h>
@@ -23,16 +24,24 @@ void Patch::compute_descriptor(const std::vector<Node>& points) const
 	int nrows = 3, ncolumns = this->nodes.size();
 	gsl_matrix* data = gsl_matrix_alloc(nrows, ncolumns);
 
+	//build vector with point positions
+	std::vector<glm::dvec3> p;
+	for(auto it = nodes.begin(); it != nodes.end(); ++it)
+		p.push_back( points[*it].get_pos() );
+
+	//compute patches centroid; remember PCA must be done when
+	//mean of all points is zero
+	glm::dvec3 centroid = cloud_centroid(p);
+
 	//Build matrix where each column is one of the points in region
-	for(int i = 0; i < this->nodes.size(); i++)
-	{
-		//Remember each element of this->nodes is a node index
-		glm::dvec3 p = points[ nodes[i] ].get_pos();
-		
+	for(int i = 0; i < p.size(); i++)
+	{	
+		glm::dvec3 translated_point = p[i] - centroid;
+
 		//Set column i with px, py and pz
-		gsl_matrix_set(data, 0, i, p[0]);
-		gsl_matrix_set(data, 1, i, p[1]);
-		gsl_matrix_set(data, 2, i, p[2]);
+		gsl_matrix_set(data, 0, i, translated_point[0]);
+		gsl_matrix_set(data, 1, i, translated_point[1]);
+		gsl_matrix_set(data, 2, i, translated_point[2]);
 	}
 
 	//transpose matrix
