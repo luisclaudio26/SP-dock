@@ -52,8 +52,11 @@ void principal_component_analysis(const std::vector<glm::dvec3>& points, glm::dm
 	gsl_eigen_symmv_sort(eigen_val, eigen_vec, GSL_EIGEN_SORT_VAL_DESC);
 
 	//build final matrix
-	memcpy( glm::value_ptr(out_eigen_vec), eigen_vec->data, 9*sizeof(double) );
 	memcpy( glm::value_ptr(out_eigen_val), eigen_val->data, 3*sizeof(double) );	
+	memcpy( glm::value_ptr(out_eigen_vec), eigen_vec->data, 9*sizeof(double) );
+	
+	//transpose maps from origin to space defined by the three eigenvectors
+	out_eigen_vec = glm::transpose(out_eigen_vec);
 
 	//delete pointers
 	gsl_matrix_free(data); gsl_matrix_free(data_t); gsl_matrix_free(covar);
@@ -93,4 +96,15 @@ void Patch::compute_descriptor(const std::vector<Node>& points) const
 	//PCA of translated cloud point
 	glm::dmat3 eigen_vec; glm::dvec3 eigen_val;
 	principal_component_analysis(p, eigen_vec, eigen_val);
+
+	//send all points to the eigenvectors basis
+	for(auto it = p.begin(); it != p.end(); ++it)
+		*it = eigen_vec * (*it);
+
+	//first, totally naïve descriptor: just store "curvature"
+	//as the relative variance in the direction of the least
+	//eigenvector, i.e., the least eigenvalue divided by total
+	double total = 0.0; for(int i = 0; i < 3; i++) total += eigen_val[i];
+
+	std::cout<<"Curvature: "<<eigen_val[2] / total <<std::endl;
 }
