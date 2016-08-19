@@ -1,47 +1,36 @@
 #include "../../inc/graph/patch.h"
 #include "../../inc/math/linalg.h"
 
-#include <cstdio>
+#include <iostream>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/string_cast.hpp>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_eigen.h>
 #include <gsl/gsl_blas.h>
 
-Patch::Patch(const std::vector<int>& nodes)
+//-------------------------------------------------------------------
+//-------------------------- INTERNAL -------------------------------
+//-------------------------------------------------------------------
+void build_vector_of_points(const std::vector<Node>& nodes, const std::vector<int>& patch, std::vector<glm::dvec3>& out)
 {
-	//capture patch by move semantics
-	this->nodes = std::move(nodes);
+	for(auto it = patch.begin(); it != patch.end(); ++it)
+		out.push_back( nodes[*it].get_pos() );
 }
 
-void Patch::paint_patch(std::vector<Node>& graph, const glm::vec3& color) const
-{
-	for(auto n = this->nodes.begin(); n != this->nodes.end(); ++n)
-		graph[*n].set_color(color);
-}
-
-void Patch::compute_descriptor(const std::vector<Node>& points) const
+void principal_component_analysis(const std::vector<glm::dvec3>& points, glm::dmat3& out_eigen_vec, glm::dvec3& out_eigen_val)
 {
 	//3 rows, n columns
-	int nrows = 3, ncolumns = this->nodes.size();
+	int nrows = 3, ncolumns = points.size();
 	gsl_matrix* data = gsl_matrix_alloc(nrows, ncolumns);
 
-	//build vector with point positions
-	std::vector<glm::dvec3> p;
-	for(auto it = nodes.begin(); it != nodes.end(); ++it)
-		p.push_back( points[*it].get_pos() );
-
-	//compute patches centroid; remember PCA must be done when
-	//mean of all points is zero
-	glm::dvec3 centroid = cloud_centroid(p);
-
 	//Build matrix where each column is one of the points in region
-	for(int i = 0; i < p.size(); i++)
+	for(int i = 0; i < ncolumns; i++)
 	{	
-		glm::dvec3 translated_point = p[i] - centroid;
-
 		//Set column i with px, py and pz
-		gsl_matrix_set(data, 0, i, translated_point[0]);
-		gsl_matrix_set(data, 1, i, translated_point[1]);
-		gsl_matrix_set(data, 2, i, translated_point[2]);
+		gsl_matrix_set(data, 0, i, points[i][0]);
+		gsl_matrix_set(data, 1, i, points[i][1]);
+		gsl_matrix_set(data, 2, i, points[i][2]);
 	}
 
 	//transpose matrix
@@ -62,8 +51,46 @@ void Patch::compute_descriptor(const std::vector<Node>& points) const
 	//sort eigenvectors by eigenvalues
 	gsl_eigen_symmv_sort(eigen_val, eigen_vec, GSL_EIGEN_SORT_VAL_DESC);
 
+	//build final matrix
+	memcpy( glm::value_ptr(out_eigen_vec), eigen_vec->data, 9*sizeof(double) );
+	memcpy( glm::value_ptr(out_eigen_val), eigen_val->data, 3*sizeof(double) );	
+
 	//delete pointers
 	gsl_matrix_free(data); gsl_matrix_free(data_t); gsl_matrix_free(covar);
 	gsl_matrix_free(eigen_vec); gsl_vector_free(eigen_val);
 	gsl_eigen_symmv_free(eigen_aux);
+}
+
+//-----------------------------------------------------------------------
+//-------------------------- FROM PATCH.H -------------------------------
+//-----------------------------------------------------------------------
+Patch::Patch(const std::vector<int>& nodes)
+{
+	//capture patch by move semantics
+	this->nodes = std::move(nodes);
+}
+
+void Patch::paint_patch(std::vector<Node>& graph, const glm::vec3& color) const
+{
+	for(auto n = this->nodes.begin(); n != this->nodes.end(); ++n)
+		graph[*n].set_color(color);
+}
+
+void Patch::compute_descriptor(const std::vector<Node>& points) const
+{
+	//build vector with point positions
+	std::vector<glm::dvec3> p;
+	build_vector_of_points(points, this->nodes, p);
+
+	//compute patches centroid; remember PCA must be done when
+	//mean of all points is zero
+	glm::dvec3 centroid = cloud_centroid(p);
+
+	//translate centroid to origin
+	for(auto it = p.begin(); it != p.end(); ++it)
+		*it = *it - centroid;
+
+	//PCA of translated cloud point
+	glm::dmat3 eigen_vec; glm::dvec3 eigen_val;
+	principal_component_analysis(p, eigen_vec, eigen_val);
 }
