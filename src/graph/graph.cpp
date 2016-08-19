@@ -210,7 +210,7 @@ static Patch generate_patch(const std::vector<Node>& nodes, std::list<int>& rank
 	delete[] visited;
 
 	//push to patch and return
-	return Patch(patch);
+	return Patch( nodes[point_id].get_normal(), patch);
 }
 
 static void remove_spurious_patches(int threshold, std::vector<Patch>& features)

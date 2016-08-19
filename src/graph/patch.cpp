@@ -4,6 +4,7 @@
 #include <iostream>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/matrix_access.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_eigen.h>
@@ -67,8 +68,10 @@ void principal_component_analysis(const std::vector<glm::dvec3>& points, glm::dm
 //-----------------------------------------------------------------------
 //-------------------------- FROM PATCH.H -------------------------------
 //-----------------------------------------------------------------------
-Patch::Patch(const std::vector<int>& nodes)
+Patch::Patch(const glm::dvec3& normal, const std::vector<int>& nodes)
 {
+	this->normal = normal;
+
 	//capture patch by move semantics
 	this->nodes = std::move(nodes);
 }
@@ -103,8 +106,10 @@ void Patch::compute_descriptor(const std::vector<Node>& points) const
 
 	//first, totally naïve descriptor: just store "curvature"
 	//as the relative variance in the direction of the least
-	//eigenvector, i.e., the least eigenvalue divided by total
+	//eigenvector, i.e., the least eigenvalue divided by total.
+	//Signal is important to know whether patch is convex or concave.
 	double total = 0.0; for(int i = 0; i < 3; i++) total += eigen_val[i];
 
-	std::cout<<"Curvature: "<<eigen_val[2] / total <<std::endl;
+	double curvature = eigen_val[2] / total;
+	Convexity type = glm::dot( glm::row(eigen_vec, 2), this->normal) < 0 ? CONVEX : CONCAVE; 
 }
