@@ -1,6 +1,6 @@
 CC = g++
 FLAGS = -g -O0 -std=c++11
-LIBS = -lm -lGL -lglfw -lGLEW
+LIBS = -lm -lGL -lglfw -lGLEW $(shell pkg-config --libs gsl)
 INC = -I /usr/include/GLFW
 EXEC = keypoints
 

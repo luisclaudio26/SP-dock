@@ -39,7 +39,11 @@ int main(int argc, char** args)
 	mesh_graph.feature_points(uf, feature_points, patch_threshold);
 
 	//visualize mesh
-	Render::instance()->draw_mesh( mesh_graph );
+	//Render::instance()->draw_mesh( mesh_graph );
+
+	//generate descriptors
+	for(auto f = feature_points.begin(); f != feature_points.end(); ++f)
+		f->compute_descriptor( mesh_graph.get_nodes() );
 
 	//Experimento: compute o raio médio de um patch e a média de pontos
 	//
@@ -95,5 +99,7 @@ int main(int argc, char** args)
 	//				a dimensão maior da caixa e z como a dimensão menor. Isso deveria garantir invariância à rotação!
 	//			   Mas como calcular a caixa envoltória rapidamente?
 	// Solução 3 : Se em vez da caixa envoltória, usamos os autovetores com maiores autovalores? -> ANÁLISE DE COMPONENTE PRINCIPAL!
+	// Solução 4 : Os componentes principais menores podem ser usados para guiar o tamanho da daisy
+	// OBS. 2 : Ora, mas a Daisy em si não é necessária! Somente a distância ao plano já seria suficiente.
 	return 0;
 }
