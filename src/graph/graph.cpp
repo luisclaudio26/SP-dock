@@ -274,6 +274,7 @@ std::string Graph::graph2str()
 	return ss.str();
 }
 
+//Compute curvature for each point in mesh
 void Graph::compute_curvatures()
 {
 	for(auto n = nodes.begin(); n != nodes.end(); ++n)
@@ -308,6 +309,7 @@ void Graph::compute_curvatures()
 	}
 }
 
+//Classify points into three groups: concave, convex or flat
 void Graph::classify_points()
 {
 	//TODO: THIS METHOD WON'T WORK AS WE DO IT NOW
@@ -333,6 +335,7 @@ void Graph::classify_points()
 	}
 }
 
+//Segment mesh into regions of convex-, concave- or flat-only points 
 void Graph::segment_by_curvature(UnionFind& uf)
 {
 	bool *visited = new bool[this->nodes.size()];
@@ -344,6 +347,7 @@ void Graph::segment_by_curvature(UnionFind& uf)
 	delete[] visited;
 }
 
+//Extracts feature points by expanding all points until the border is reached
 void Graph::feature_points(const UnionFind& uf, std::vector<Patch>& feature, int patch_threshold)
 {
 	//cluster points by convexity
@@ -409,4 +413,23 @@ void Graph::feature_points(const UnionFind& uf, std::vector<Patch>& feature, int
 
 	//paint patches
 	paint_patches(this->nodes, feature);
+}
+
+void Graph::preprocess_mesh(std::vector< std::pair<Patch, Descriptor> >& out, int patch_threshold)
+{
+	compute_curvatures();
+	
+	classify_points();
+
+	UnionFind uf( this->nodes.size() );
+	segment_by_curvature(uf);
+
+	std::vector<Patch> patches;
+	feature_points(uf, patches, patch_threshold);
+
+	for(auto p = patches.begin(); p != patches.end(); ++p)
+	{
+		Descriptor d = p->compute_descriptor( this->nodes );
+		out.push_back( std::make_pair(*p, d) );
+	}
 }

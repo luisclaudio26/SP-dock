@@ -4,8 +4,8 @@
 #include <algorithm>
 
 #include "./inc/graph/graph.h"
+#include "./inc/descriptor/descriptor.h"
 #include "./inc/io/fileio.h"
-#include "./inc/util/unionfind.h"
 #include "./inc/visualization/render.h"
 
 int main(int argc, char** args)
@@ -19,34 +19,15 @@ int main(int argc, char** args)
 	if(argc > 2) patch_threshold = atoi( args[argc-1] );
 
 
-	//Load molecular surface as generated from MSMS program
-	Graph mesh_graph;
-	FileIO::instance()->mesh_from_file(vertfile, facefile, mesh_graph);
+	Graph target; std::vector< std::pair<Patch,Descriptor> > desc_target;
+	FileIO::instance()->mesh_from_file(vertfile, facefile, target);
+	target.preprocess_mesh(desc_target, patch_threshold);
 
-	//Compute curvature for each point in mesh
-	mesh_graph.compute_curvatures();
+	Graph ligand; std::vector< std::pair<Patch,Descriptor> > desc_ligand;
+	FileIO::instance()->mesh_from_file(vertfile, facefile, ligand);
+	ligand.preprocess_mesh(desc_target, patch_threshold);
 
-	//classify each point as convex/concave/flat
-	mesh_graph.classify_points();
-
-	//Get contiguous regions of convex/concave/flat points
-	UnionFind uf( mesh_graph.size() );
-	mesh_graph.segment_by_curvature(uf);
-
-	//Extract feature points by expanding points until we
-	//reach the borders
-	std::vector<Patch> feature_points;
-	mesh_graph.feature_points(uf, feature_points, patch_threshold);
-
-	//visualize mesh
-	//Render::instance()->draw_mesh( mesh_graph );
-
-	//generate descriptors
-	std::vector<Descriptor> descriptors;
-	for(auto f = feature_points.begin(); f != feature_points.end(); ++f)
-		descriptors.push_back( f->compute_descriptor( mesh_graph.get_nodes() ) );
-
-	//next step: do all these steps for two molecules, then implement group-based matching
+	Render::instance()->draw_mesh(ligand);
 
 	return 0;
 }

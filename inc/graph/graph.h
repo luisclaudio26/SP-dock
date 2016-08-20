@@ -2,9 +2,10 @@
 #define _GRAPH_H_
 
 #include <vector>
+#include <utility>
 #include "node.h"
+#include "patch.h"
 #include "../util/unionfind.h"
-#include "./patch.h"
 
 typedef struct {
 	int a, b, c;
@@ -39,6 +40,10 @@ public:
 	void classify_points();
 	void segment_by_curvature(UnionFind& uf);
 	void feature_points(const UnionFind& uf, std::vector<Patch>& feature, int patch_threshold);
+
+	//After preprocessing the mesh, we output a list or pairs
+	//<P,D>, where P is the patch itself and D is the associated descriptor.
+	void preprocess_mesh(std::vector< std::pair<Patch, Descriptor> >& out, int patch_threshold);
 
 	//--------------------------------
 	//-------- Debugging ops ---------
