@@ -44,7 +44,7 @@ int main(int argc, char** args)
 			const std::pair<Patch,Descriptor> &l_patch = desc_ligand[l];
 			if(t_patch.second.type * l_patch.second.type == -1)
 			{
-				double dist = fabs(t_patch.second.curv - l_patch.second.curv);
+				double dist = fabs(t_patch.second.curv - l_patch.second.curv) / std::max(t_patch.second.curv, l_patch.second.curv);
 				similarity_list.push_back( std::make_pair(dist, l) );
 			}
 		}
