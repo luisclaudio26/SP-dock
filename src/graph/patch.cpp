@@ -82,7 +82,7 @@ void Patch::paint_patch(std::vector<Node>& graph, const glm::vec3& color) const
 		graph[*n].set_color(color);
 }
 
-Descriptor Patch::compute_descriptor(const std::vector<Node>& points) const
+Descriptor Patch::compute_descriptor(const std::vector<Node>& points)
 {
 	//build vector with point positions
 	std::vector<glm::dvec3> p;
@@ -90,7 +90,7 @@ Descriptor Patch::compute_descriptor(const std::vector<Node>& points) const
 
 	//compute patches centroid; remember PCA must be done when
 	//mean of all points is zero
-	glm::dvec3 centroid = cloud_centroid(p);
+	this->centroid = cloud_centroid(p);
 
 	//translate centroid to origin
 	for(auto it = p.begin(); it != p.end(); ++it)
@@ -114,4 +114,9 @@ Descriptor Patch::compute_descriptor(const std::vector<Node>& points) const
 	int type = glm::dot( glm::row(eigen_vec, 2), this->normal) < 0 ? 1 : -1;
 
 	return (Descriptor){curvature, type};
+}
+
+glm::dvec3 Patch::get_pos() const
+{
+	return this->centroid;
 }
