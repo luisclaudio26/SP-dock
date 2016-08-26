@@ -39,11 +39,11 @@ public:
 	void compute_curvatures();
 	void classify_points();
 	void segment_by_curvature(UnionFind& uf);
-	void feature_points(const UnionFind& uf, std::vector<Patch>& feature, int patch_threshold);
+	void feature_points(const UnionFind& uf, std::vector<Patch>& feature);
 
 	//After preprocessing the mesh, we output a list or pairs
 	//<P,D>, where P is the patch itself and D is the associated descriptor.
-	void preprocess_mesh(std::vector< std::pair<Patch, Descriptor> >& out, int patch_threshold);
+	void preprocess_mesh(std::vector< std::pair<Patch, Descriptor> >& out);
 
 	//--------------------------------
 	//-------- Debugging ops ---------

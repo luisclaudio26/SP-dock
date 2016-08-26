@@ -1,4 +1,5 @@
 #include "../../inc/docker/docker.h"
+#include "../../inc/parameters.h"
 #include <algorithm>
 #include <iostream>
 
@@ -7,9 +8,7 @@ Docker* Docker::docker_ptr = 0;
 //------------------------------------------------------
 //--------------------- INTERNAL -----------------------
 //------------------------------------------------------
-static const int K = 5;
-static const int G_THRESH = 2;
-
+// This computes the geodesic distance between two patches
 static int geodesic_distance(int lhs_patch_ind, int rhs_patch_ind, const SurfaceDescriptors& desc)
 {
 	const Patch& lhs_patch = desc[lhs_patch_ind].first;
@@ -59,9 +58,9 @@ void Docker::build_matching_groups(const SurfaceDescriptors& desc_target,
 		std::sort(similarity_list.begin(), similarity_list.end());
 
 		//get the K patches most similar to t_patch
-		similarity_list.erase( similarity_list.begin() + K, similarity_list.end() );
+		similarity_list.erase( similarity_list.begin() + Parameters::N_BEST_PAIRS, similarity_list.end() );
 
-		//try to put pairs in groups
+		//try to group pairs together
 		for(auto lig = similarity_list.begin(); lig != similarity_list.end(); ++lig)
 		{
 			bool added = false;
@@ -76,8 +75,8 @@ void Docker::build_matching_groups(const SurfaceDescriptors& desc_target,
 				//check distances
 				for(auto pair = grp->begin(); pair != grp->end(); ++pair)
 				{
-					if( geodesic_distance(cur_pair.first, pair->first, desc_target) > G_THRESH ) grouping_crit = false;
-					if( geodesic_distance(cur_pair.second, pair->second, desc_ligand) > G_THRESH ) grouping_crit = false;
+					if( geodesic_distance(cur_pair.first, pair->first, desc_target) > Parameters::G_THRESH ) grouping_crit = false;
+					if( geodesic_distance(cur_pair.second, pair->second, desc_ligand) > Parameters::G_THRESH ) grouping_crit = false;
 				}
 
 				//if group criterion holds, push cur_pair to group

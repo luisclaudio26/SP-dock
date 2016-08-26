@@ -2,6 +2,7 @@
 #include "../../inc/graph/patch.h"
 #include "../../inc/math/linalg.h"
 #include "../../inc/util/unionfind.h"
+#include "../../inc/parameters.h"
 #include <sstream>
 #include <cstring>
 #include <set>
@@ -17,13 +18,10 @@ using std::endl;
 //-------------------------------------------------------------------
 //------------------- GLOBALS, DEFINES, TYPEDEFS --------------------
 //-------------------------------------------------------------------
-static int PATCH_SIZE_THRESHOLD = 8;
-
 static std::map<int,int> G_DISTANCES;
 static bool comp_by_distance(int rhs_node, int lhs_node) {
 	return G_DISTANCES[lhs_node] < G_DISTANCES[rhs_node];
 }
-typedef bool(*comp_func)(int,int);
 
 #define IN_LIST 0x01
 #define VISITED 0x02
@@ -348,7 +346,7 @@ void Graph::segment_by_curvature(UnionFind& uf)
 }
 
 //Extracts feature points by expanding all points until the border is reached
-void Graph::feature_points(const UnionFind& uf, std::vector<Patch>& feature, int patch_threshold)
+void Graph::feature_points(const UnionFind& uf, std::vector<Patch>& feature)
 {
 	//cluster points by convexity
 	std::vector< std::vector<int> > clusters;
@@ -409,13 +407,13 @@ void Graph::feature_points(const UnionFind& uf, std::vector<Patch>& feature, int
 	}
 
 	//post-process generated patches
-	remove_spurious_patches(patch_threshold, feature);
+	remove_spurious_patches(Parameters::PATCH_SIZE_THRESH, feature);
 
 	//paint patches
 	paint_patches(this->nodes, feature);
 }
 
-void Graph::preprocess_mesh(std::vector< std::pair<Patch, Descriptor> >& out, int patch_threshold)
+void Graph::preprocess_mesh(std::vector< std::pair<Patch, Descriptor> >& out)
 {
 	compute_curvatures();
 	
@@ -425,7 +423,7 @@ void Graph::preprocess_mesh(std::vector< std::pair<Patch, Descriptor> >& out, in
 	segment_by_curvature(uf);
 
 	std::vector<Patch> patches;
-	feature_points(uf, patches, patch_threshold);
+	feature_points(uf, patches);
 
 	for(auto p = patches.begin(); p != patches.end(); ++p)
 	{
