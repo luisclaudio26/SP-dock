@@ -8,6 +8,9 @@
 #include "./inc/io/fileio.h"
 #include "./inc/visualization/render.h"
 
+const int K = 5;
+const int G_THRESH = 10;
+
 int main(int argc, char** args)
 {
 	std::string fname(args[1]);
@@ -27,8 +30,11 @@ int main(int argc, char** args)
 	FileIO::instance()->mesh_from_file(vertfile, facefile, ligand);
 	ligand.preprocess_mesh(desc_ligand, patch_threshold);
 
-	//1) Calcule a dissimilaridade entre todos os pares
-	//de patch do target e do ligand
+	//create matching groups. This is a list of GROUPS, each GROUP
+	//being a list of pairs <int,int>, where pair.first is the patch
+	//in target and pair.second is the patch in ligand.
+	std::vector<std::vector<std::pair<int,int> > > matching_groups;
+
 	for(int t = 0; t < desc_target.size(); ++t)
 	{
 		const std::pair<Patch,Descriptor> &t_patch = desc_target[t];
@@ -55,9 +61,53 @@ int main(int argc, char** args)
 		//patch we're treating.
 		std::sort(similarity_list.begin(), similarity_list.end());
 
-		std::cout<<"Ranked distances from "<<t<<" : "<<std::endl;
-		for(auto it = similarity_list.begin(); it != similarity_list.end(); ++it)
-			std::cout<<"	to "<<it->second<<" : "<<it->first<<std::endl;
+		//get the K patches most similar to t_patch
+		similarity_list.erase( similarity_list.begin() + K, similarity_list.end() );
+
+		//try to put pairs in groups
+		for(auto lig = similarity_list.begin(); lig != similarity_list.end(); ++lig)
+		{
+			bool added = false;
+
+			//build the current pair we're treating
+			std::pair<int,int> cur_pair = std::make_pair(t, lig->second);
+
+			for(auto grp = matching_groups.begin(); grp != matching_groups.end(); ++grp)
+			{
+				bool grouping_crit = true;
+
+				//check distances
+				for(auto pair = grp->begin(); pair != grp->end(); ++pair)
+				{
+					if( rand() % 20 > G_THRESH ) grouping_crit = false;
+					if( rand() % 20 > G_THRESH ) grouping_crit = false;
+				}
+
+				//if group criterion holds, push cur_pair to group
+				if(grouping_crit)
+				{
+					grp->push_back( cur_pair );
+					added = true;
+				}
+			}
+
+			//if cur_pair was not added to any group, create a new group
+			if(!added)
+			{
+				std::vector<std::pair<int,int> > new_group;
+				new_group.push_back( cur_pair );
+				matching_groups.push_back( new_group );
+			}
+		}
+	}
+
+	std::cout<<"Groups :"<<std::endl;
+	for(auto grp = matching_groups.begin(); grp != matching_groups.end(); ++grp)
+	{
+		std::cout<<"---------------------------------------\n";
+		for(auto pair = grp->begin(); pair != grp->end(); ++pair)
+			std::cout<<"("<<pair->first<<", "<<pair->second<<"), ";
+		std::cout<<std::endl<<std::endl;
 	}
 
 	return 0;
