@@ -9,10 +9,12 @@
 class Patch
 {
 private:
-	std::vector<int> nodes;
+	
 	glm::dvec3 normal;
 
 public:
+	std::vector<int> nodes;
+
 	Patch(const glm::dvec3& normal, const std::vector<int>& nodes);
 
 	//-----------------------------------

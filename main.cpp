@@ -9,7 +9,19 @@
 #include "./inc/visualization/render.h"
 
 const int K = 5;
-const int G_THRESH = 10;
+const int G_THRESH = 3;
+
+int geodesic_distance(int lhs_patch_ind, int rhs_patch_ind, const std::vector<std::pair<Patch,Descriptor> >& desc, const std::vector<Node>& nodes)
+{
+	const Patch& lhs_patch = desc[lhs_patch_ind].first;
+	const Patch& rhs_patch = desc[rhs_patch_ind].first;
+
+	//just compute Euclidean distance between two random points in patches
+	glm::dvec3 n1 = nodes[lhs_patch.nodes[0]].get_pos();
+	glm::dvec3 n2 = nodes[rhs_patch.nodes[0]].get_pos();
+
+	return glm::length(n1-n2);
+}
 
 int main(int argc, char** args)
 {
@@ -79,8 +91,8 @@ int main(int argc, char** args)
 				//check distances
 				for(auto pair = grp->begin(); pair != grp->end(); ++pair)
 				{
-					if( rand() % 20 > G_THRESH ) grouping_crit = false;
-					if( rand() % 20 > G_THRESH ) grouping_crit = false;
+					if( geodesic_distance(cur_pair.first, pair->first, desc_target, target.get_nodes()) > G_THRESH ) grouping_crit = false;
+					if( geodesic_distance(cur_pair.second, pair->second, desc_ligand, ligand.get_nodes()) > G_THRESH ) grouping_crit = false;
 				}
 
 				//if group criterion holds, push cur_pair to group
@@ -101,6 +113,7 @@ int main(int argc, char** args)
 		}
 	}
 
+	//maybe we can sort it and get only the best groups (with more pairs)
 	std::cout<<"Groups :"<<std::endl;
 	for(auto grp = matching_groups.begin(); grp != matching_groups.end(); ++grp)
 	{
