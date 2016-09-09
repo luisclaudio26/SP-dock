@@ -1,7 +1,9 @@
 #include "../../inc/docker/docker.h"
 #include "../../inc/parameters.h"
+#include "glm/gtx/string_cast.hpp"
 #include <algorithm>
 #include <iostream>
+#include <set>
 
 Docker* Docker::docker_ptr = 0;
 
@@ -14,11 +16,43 @@ static int geodesic_distance(int lhs_patch_ind, int rhs_patch_ind, const Surface
 	const Patch& lhs_patch = desc[lhs_patch_ind].first;
 	const Patch& rhs_patch = desc[rhs_patch_ind].first;
 
-	//just compute Euclidean distance between two random points in patches
+	//First version: just compute euclidean distance between patches centroid
 	glm::dvec3 n1 = lhs_patch.get_pos();
 	glm::dvec3 n2 = rhs_patch.get_pos();
 
 	return glm::length(n1-n2);
+}
+
+// This compares two point in R³
+static bool comp_point(const glm::dvec3& lhs, const glm::dvec3& rhs)
+{
+	if( lhs[0] != rhs[0] ) return lhs[0] < rhs[0];
+	if( lhs[1] != rhs[1] ) return lhs[1] < rhs[1];
+	if( lhs[2] != rhs[2] ) return lhs[2] < rhs[2];
+
+	//lhs is equal to rhs, so is not less then rhs
+	return false;
+}
+
+// This merges all patches of a group into a single cloud point
+static void build_cloud_from_group(const SurfaceDescriptors& desc_target, 
+									const Graph& target, 
+									std::vector<glm::dvec3>& target_cloud)
+{
+	for(auto desc_pair = desc_target.begin(); desc_pair != desc_target.end(); ++desc_pair)
+	{
+		const Patch& patch = desc_pair->first;
+
+		std::set<glm::dvec3,bool(*)(const glm::dvec3&,const glm::dvec3&)> cloud(comp_point);
+
+		// put everyone into one set.
+		// This makes sure we have no repeated points
+		for(auto p = patch.nodes.begin(); p != patch.nodes.end(); ++p)
+			cloud.insert( target.get_node(*p).get_pos() );
+
+		//copy set to vector
+		target_cloud = std::vector<glm::dvec3>( cloud.begin(), cloud.end() );
+	}
 }
 
 //-----------------------------------------------------------
@@ -97,14 +131,30 @@ void Docker::build_matching_groups(const SurfaceDescriptors& desc_target,
 		}
 	}
 
-	//maybe we can sort it and get only the best groups (with more pairs)
-	std::cout<<"Groups :"<<std::endl;
-	for(auto grp = groups_out.begin(); grp != groups_out.end(); ++grp)
+	return;
+}
+
+void Docker::transformations_from_matching_groups(const std::vector<MatchingGroup>& matching_groups, 
+												const Graph& target, const SurfaceDescriptors& desc_target,
+												const Graph& ligand, const SurfaceDescriptors& desc_ligand,
+												std::vector<glm::dmat4>& mg_transformation) const
+{
+	for(auto MG = matching_groups.begin(); MG != matching_groups.end(); ++MG)
 	{
-		std::cout<<"---------------------------------------\n";
-		for(auto pair = grp->begin(); pair != grp->end(); ++pair)
-			std::cout<<"("<<pair->first<<", "<<pair->second<<"), ";
-		std::cout<<std::endl<<std::endl;
+		//1) Get cloud point for TARGET group
+		std::vector<glm::dvec3> target_cloud;
+		build_cloud_from_group(desc_target, target, target_cloud);
+
+
+		//2) Get cloud point for LIGAND group
+		//3) Translate ligand so to match centroids
+		//4) Rotate ligand so to align the average normal of the patches
+		//	(i.e., the average of the normals)
+		//5) Output transformation to mg_transformation
+
+		// For future work, after translating and aligning we'll use
+		// ICP with Regular Grid to get a better alignment for the
+		// clouds.
 	}
 
 	return;

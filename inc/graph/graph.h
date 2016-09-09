@@ -31,6 +31,11 @@ public:
 	std::vector<Node>& get_nodes() { return nodes; }
 	const std::vector<Face>& get_faces() const { return faces; }
 
+	Node get_node(int i) const
+	{
+		return nodes[i];
+	}
+
 	//-------------------------------
 	//--------- Operations ----------
 	//-------------------------------

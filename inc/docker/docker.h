@@ -5,6 +5,7 @@
 #include <utility>
 #include "../descriptor/descriptor.h"
 #include "../graph/patch.h"
+#include "../graph/graph.h"
 
 typedef std::vector<std::pair<int,int> > 			MatchingGroup;
 typedef std::vector<std::pair<Patch, Descriptor> >	SurfaceDescriptors;
@@ -27,6 +28,11 @@ public:
 	void build_matching_groups(const SurfaceDescriptors& desc_target,
 								const SurfaceDescriptors& desc_ligand,
 								std::vector<MatchingGroup>& groups_out) const;
+
+	void transformations_from_matching_groups(const std::vector<MatchingGroup>& matching_groups, 
+												const Graph& target, const SurfaceDescriptors& desc_target,
+												const Graph& ligand, const SurfaceDescriptors& desc_ligand,
+												std::vector<glm::dmat4>& mg_transformation) const;
 };
 
 #endif
