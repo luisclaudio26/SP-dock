@@ -1,6 +1,8 @@
 #include "../../inc/docker/docker.h"
 #include "../../inc/parameters.h"
-#include "glm/gtx/string_cast.hpp"
+#include "../../inc/math/linalg.h"
+#include <glm/gtx/string_cast.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <iostream>
 #include <set>
@@ -23,7 +25,7 @@ static int geodesic_distance(int lhs_patch_ind, int rhs_patch_ind, const Surface
 	return glm::length(n1-n2);
 }
 
-// This compares two point in R³
+// This compares two points in R³
 static bool comp_point(const glm::dvec3& lhs, const glm::dvec3& rhs)
 {
 	if( lhs[0] != rhs[0] ) return lhs[0] < rhs[0];
@@ -35,24 +37,26 @@ static bool comp_point(const glm::dvec3& lhs, const glm::dvec3& rhs)
 }
 
 // This merges all patches of a group into a single cloud point
-static void build_cloud_from_group(const SurfaceDescriptors& desc_target, 
+static void build_cloud_from_group(const std::vector<int>& group,
+									const SurfaceDescriptors& descriptors, 
 									const Graph& target, 
-									std::vector<glm::dvec3>& target_cloud)
+									std::vector<glm::dvec3>& cloud_out)
 {
-	for(auto desc_pair = desc_target.begin(); desc_pair != desc_target.end(); ++desc_pair)
+	//we'll use a BST to store all points without repeating
+	std::set<glm::dvec3,bool(*)(const glm::dvec3&,const glm::dvec3&)> cloud(comp_point);
+
+	//we'll loop through all patches inside GROUP
+	for(auto desc_pair = group.begin(); desc_pair != group.end(); ++desc_pair)
 	{
-		const Patch& patch = desc_pair->first;
+		const Patch& patch = descriptors[*desc_pair].first;
 
-		std::set<glm::dvec3,bool(*)(const glm::dvec3&,const glm::dvec3&)> cloud(comp_point);
-
-		// put everyone into one set.
-		// This makes sure we have no repeated points
+		// put every point inside this patch into the cloud.
 		for(auto p = patch.nodes.begin(); p != patch.nodes.end(); ++p)
 			cloud.insert( target.get_node(*p).get_pos() );
-
-		//copy set to vector
-		target_cloud = std::vector<glm::dvec3>( cloud.begin(), cloud.end() );
 	}
+
+	//copy set to vector
+	cloud_out = std::vector<glm::dvec3>( cloud.begin(), cloud.end() );
 }
 
 //-----------------------------------------------------------
@@ -141,13 +145,28 @@ void Docker::transformations_from_matching_groups(const std::vector<MatchingGrou
 {
 	for(auto MG = matching_groups.begin(); MG != matching_groups.end(); ++MG)
 	{
-		//1) Get cloud point for TARGET group
+		//0) Split matching group pairs into two vectors
+		std::vector<int> target_groups, ligand_groups;
+		for(auto p = MG->begin(); p != MG->end(); ++p)
+		{
+			target_groups.push_back( p->first );
+			ligand_groups.push_back( p->second );
+		}
+
+		//1) Merge patches from TARGET group
 		std::vector<glm::dvec3> target_cloud;
-		build_cloud_from_group(desc_target, target, target_cloud);
+		build_cloud_from_group(target_groups, desc_target, target, target_cloud);
 
+		//2) Merge patches from LIGAND group
+		std::vector<glm::dvec3> ligand_cloud;
+		build_cloud_from_group(ligand_groups, desc_ligand, ligand, ligand_cloud);
 
-		//2) Get cloud point for LIGAND group
-		//3) Translate ligand so to match centroids
+		//3) Translate ligand so to match centroids of groups
+		glm::dvec3 target_centroid = cloud_centroid(target_cloud);
+		glm::dvec3 ligand_centroid = cloud_centroid(ligand_cloud);
+
+		glm::dmat4 match_centroids = glm::translate(glm::dmat4(1.0), target_centroid - ligand_centroid);
+
 		//4) Rotate ligand so to align the average normal of the patches
 		//	(i.e., the average of the normals)
 		//5) Output transformation to mg_transformation
