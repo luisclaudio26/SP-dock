@@ -37,11 +37,17 @@ static bool comp_point(const glm::dvec3& lhs, const glm::dvec3& rhs)
 }
 
 // This merges all patches of a group into a single cloud point
+// and, at the same, computes the average normal of the cloud.
+// 'though it's not nice to merge different operations in a single
+// function, this is faster then computing separately.
 static void build_cloud_from_group(const std::vector<int>& group,
 									const SurfaceDescriptors& descriptors, 
 									const Graph& target, 
-									std::vector<glm::dvec3>& cloud_out)
+									std::vector<glm::dvec3>& cloud_out,
+									glm::dvec3& avg_normal)
 {
+	avg_normal = glm::dvec3(0.0, 0.0, 0.0);
+
 	//we'll use a BST to store all points without repeating
 	std::set<glm::dvec3,bool(*)(const glm::dvec3&,const glm::dvec3&)> cloud(comp_point);
 
@@ -50,6 +56,9 @@ static void build_cloud_from_group(const std::vector<int>& group,
 	{
 		const Patch& patch = descriptors[*desc_pair].first;
 
+		// accumulate normal
+		avg_normal = avg_normal + patch.get_normal();
+
 		// put every point inside this patch into the cloud.
 		for(auto p = patch.nodes.begin(); p != patch.nodes.end(); ++p)
 			cloud.insert( target.get_node(*p).get_pos() );
@@ -57,6 +66,9 @@ static void build_cloud_from_group(const std::vector<int>& group,
 
 	//copy set to vector
 	cloud_out = std::vector<glm::dvec3>( cloud.begin(), cloud.end() );
+
+	// compute average normal
+	avg_normal = avg_normal * (1.0 / group.size());
 }
 
 //-----------------------------------------------------------
@@ -143,6 +155,8 @@ void Docker::transformations_from_matching_groups(const std::vector<MatchingGrou
 												const Graph& ligand, const SurfaceDescriptors& desc_ligand,
 												std::vector<glm::dmat4>& mg_transformation) const
 {
+	std::cout<<"Number of poses: "<<matching_groups.size()<<std::endl;
+
 	for(auto MG = matching_groups.begin(); MG != matching_groups.end(); ++MG)
 	{
 		//0) Split matching group pairs into two vectors
@@ -154,12 +168,12 @@ void Docker::transformations_from_matching_groups(const std::vector<MatchingGrou
 		}
 
 		//1) Merge patches from TARGET group
-		std::vector<glm::dvec3> target_cloud;
-		build_cloud_from_group(target_groups, desc_target, target, target_cloud);
+		std::vector<glm::dvec3> target_cloud; glm::dvec3 target_normal;
+		build_cloud_from_group(target_groups, desc_target, target, target_cloud, target_normal);
 
 		//2) Merge patches from LIGAND group
-		std::vector<glm::dvec3> ligand_cloud;
-		build_cloud_from_group(ligand_groups, desc_ligand, ligand, ligand_cloud);
+		std::vector<glm::dvec3> ligand_cloud; glm::dvec3 ligand_normal;
+		build_cloud_from_group(ligand_groups, desc_ligand, ligand, ligand_cloud, ligand_normal);
 
 		//3) Translate ligand so to match centroids of groups
 		glm::dvec3 target_centroid = cloud_centroid(target_cloud);
@@ -169,6 +183,17 @@ void Docker::transformations_from_matching_groups(const std::vector<MatchingGrou
 
 		//4) Rotate ligand so to align the average normal of the patches
 		//	(i.e., the average of the normals)
+		// Para computar a rotação que alinha as duas normais:
+		// calcule o produto vetorial de target_normal e ligand_normal (isso nos dá o eixo de rotação)
+		// calcule o produto interno de target_normal e ligand_normal (isso nos dá o ângulo de rotação)
+		// construa o quaternion que rotaciona um vetor para o outro a partir do ângulo e do eixo
+		// converta para uma matriz 4x4.
+		//		-> Prestar atenção no sentido da rotação! Como garantir que estamos indo para o lado certo?
+		//		   provavelmente o sentido do produto vetorial é informação suficiente (e a direção/sentido 
+		//			do quaternion é o mesmo do produto vetorial)
+
+
+
 		//5) Output transformation to mg_transformation
 
 		// For future work, after translating and aligning we'll use

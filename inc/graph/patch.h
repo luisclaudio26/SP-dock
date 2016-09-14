@@ -29,6 +29,7 @@ public:
 	//-----------------------------------
 	Descriptor compute_descriptor(const std::vector<Node>& points);
 	glm::dvec3 get_pos() const;
+	glm::dvec3 get_normal() const;
 
 	void paint_patch(std::vector<Node>& graph, const glm::vec3& color) const;
 };

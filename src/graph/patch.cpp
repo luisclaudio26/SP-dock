@@ -120,3 +120,8 @@ glm::dvec3 Patch::get_pos() const
 {
 	return this->centroid;
 }
+
+glm::dvec3 Patch::get_normal() const
+{
+	return this->normal;
+}
