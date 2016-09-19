@@ -23,17 +23,19 @@ public:
 	//--------- Access method ---------
 	//---------------------------------
 	unsigned int size() const { return nodes.size(); }
+	unsigned int n_faces() const { return faces.size(); }
 
 	void push_node(double x, double y, double z, double nx, double ny, double nz);
 	void push_face(int a, int b, int c);
 
-	//TODO: why isn't cbegin() working!?
-	std::vector<Node>& get_nodes() { return nodes; }
-	const std::vector<Face>& get_faces() const { return faces; }
-
 	Node get_node(int i) const
 	{
 		return nodes[i];
+	}
+
+	Face get_face(int i) const
+	{
+		return faces[i];
 	}
 
 	//-------------------------------

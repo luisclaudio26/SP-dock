@@ -40,5 +40,7 @@ int main(int argc, char** args)
 															ligand, desc_ligand, 
 															mg_transformation);
 
+	Render::instance()->draw_meshes(target, ligand);
+
 	return 0;
 }

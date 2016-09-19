@@ -11,29 +11,27 @@
 
 #define ROTATION_SPEED 0.008
 
-typedef struct {
+struct _vertex {
 	glm::vec3 pos, normal, color;
-} Vertex;
+};
 
-//Just to not have to type this behemoth in main draw_mesh
+//Just to not have to type this behemoth in main pack_geometry_data
 #define NODE2VERTEX(n) ( (Vertex){n.get_pos(), n.get_normal(), n.get_color()} )
 
 //----------------------------------
 //----------- Internal -------------
 //----------------------------------
-static void pack_geometry_data(Graph& in, std::vector<Vertex>& out)
+static void pack_geometry_data(const Graph& in, std::vector<Vertex>& out)
 {
 	//pack mesh data into vertex buffer
-	std::vector<Node>& nodes = in.get_nodes();
-	const std::vector<Face>& faces = in.get_faces();
-
-	std::vector<Face>::const_iterator f = faces.begin();
-	for( ; f != faces.end(); ++f )
+	for(int i = 0; i < in.n_faces(); i++)
 	{
+		const Face& f = in.get_face(i);
+
 		//pack data
-		const Node &f1 = nodes[f->a], 
-					&f2 = nodes[f->b], 
-					&f3 = nodes[f->c];
+		const Node &f1 = in.get_node(f.a), 
+					&f2 = in.get_node(f.b), 
+					&f3 = in.get_node(f.c);
 	
 		out.push_back( NODE2VERTEX(f1) );
 		out.push_back( NODE2VERTEX(f2) );
@@ -41,28 +39,27 @@ static void pack_geometry_data(Graph& in, std::vector<Vertex>& out)
 	}
 }
 
-static double get_max_coord(Graph& mesh)
+static double get_max_coord(const std::vector<Vertex>& mesh)
 {
 	double max = std::numeric_limits<double>::lowest();
 
-	std::vector<Node>& nodes = mesh.get_nodes();
-	
-	std::vector<Node>::const_iterator n = nodes.begin();
-	for( ; n != nodes.end(); ++n)
+	std::vector<Vertex>::const_iterator n = mesh.begin();
+	for( ; n != mesh.end(); ++n)
 		for(int i = 0; i < 3; i++)
-			if( glm::abs(n->get_pos()[i]) > max ) max = glm::abs( n->get_pos()[i] );
+		{
+			double cur = glm::abs( n->pos[i] );
+			max = cur > max ? cur : max;
+		}
 
 	return max;
 }
 
-static void compute_viewprojection(Graph& mesh, glm::mat4& vp, glm::dvec3& centroid_out)
+static void compute_viewprojection(const std::vector<Vertex>& mesh, glm::mat4& vp, glm::dvec3& centroid_out)
 {
-	std::vector<Node>& nodes = mesh.get_nodes();
-
 	//compute translation which sends the centroid of the mesh to the origin
 	std::vector<glm::dvec3> points;
-	for( std::vector<Node>::const_iterator p = nodes.begin(); p != nodes.end(); ++p )
-		points.push_back( p->get_pos() );
+	for( std::vector<Vertex>::const_iterator p = mesh.begin(); p != mesh.end(); ++p )
+		points.push_back( p->pos );
 
  	glm::dvec3 centroid = centroid_out = cloud_centroid(points);
  	glm::dmat4 to_origin = glm::translate(glm::dmat4(1.0), -centroid);
@@ -96,10 +93,7 @@ static void compute_viewprojection(Graph& mesh, glm::mat4& vp, glm::dvec3& centr
 //---------------------------------------
 Render* Render::instance_ptr = 0;
 
-Render::Render()
-{
-
-}
+Render::Render() { }
 
 void Render::setup_window()
 {
@@ -137,16 +131,32 @@ void Render::terminate_rendering()
 	glfwTerminate();
 }
 
+void Render::draw_meshes(Graph& mesh1, Graph& mesh2)
+{
+	// Merge both meshes into a single one
+	std::vector<Vertex> mesh_data;
+
+	pack_geometry_data(mesh1, mesh_data);
+	pack_geometry_data(mesh2, mesh_data);
+
+	this->draw_geometry_data(mesh_data);
+}
+
 void Render::draw_mesh(Graph& mesh)
+{
+	std::vector<Vertex> mesh_data;
+
+	pack_geometry_data(mesh, mesh_data);
+
+	this->draw_geometry_data(mesh_data);	
+}
+
+void Render::draw_geometry_data(const std::vector<Vertex>& geometry_data)
 {
 	this->setup_window();
 
 	//load shader program
 	GLuint shader_id = ShaderLoader::load("./shaders/flat");
-
-	//pack mesh data into buffer
-	std::vector<Vertex> vertices;
-	pack_geometry_data(mesh, vertices);
 
 	//load mesh data
 	GLuint vertex_array_id;
@@ -158,8 +168,8 @@ void Render::draw_mesh(Graph& mesh)
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_id);
 
 	glBufferData(GL_ARRAY_BUFFER,
-				vertices.size()*sizeof(Vertex),
-				&vertices[0],
+				geometry_data.size()*sizeof(Vertex),
+				&geometry_data[0],
 				GL_STATIC_DRAW);
 
 	GLuint pos_id = glGetAttribLocation(shader_id, "pos");
@@ -196,7 +206,7 @@ void Render::draw_mesh(Graph& mesh)
 	//compute uniform data
 	glm::dvec3 centroid;
 
-	glm::mat4 vp; compute_viewprojection(mesh, vp, centroid);
+	glm::mat4 vp; compute_viewprojection(geometry_data, vp, centroid);
 	GLuint vp_id = glGetUniformLocation(shader_id, "vp");
 
 	//dumb animation
@@ -222,7 +232,7 @@ void Render::draw_mesh(Graph& mesh)
 		glUniformMatrix4fv(model_id, 1, GL_FALSE, &model_mat[0][0]);
 
 		glBindVertexArray(vertex_buffer_id);
-		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+		glDrawArrays(GL_TRIANGLES, 0, geometry_data.size());
 		glBindVertexArray(0);
 
 		glUseProgram(0);
