@@ -3,6 +3,7 @@
 #include "../../inc/math/linalg.h"
 #include <glm/gtx/string_cast.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <algorithm>
 #include <iostream>
 #include <set>
@@ -68,7 +69,7 @@ static void build_cloud_from_group(const std::vector<int>& group,
 	cloud_out = std::vector<glm::dvec3>( cloud.begin(), cloud.end() );
 
 	// compute average normal
-	avg_normal = avg_normal * (1.0 / group.size());
+	avg_normal = glm::normalize( avg_normal * (1.0 / group.size()) );
 }
 
 //-----------------------------------------------------------
@@ -150,13 +151,16 @@ void Docker::build_matching_groups(const SurfaceDescriptors& desc_target,
 	return;
 }
 
+// This function builds the transformations that aligns each of the
+// matching groups. If we have X matching groups, we should X transformations in the end.
 void Docker::transformations_from_matching_groups(const std::vector<MatchingGroup>& matching_groups, 
 												const Graph& target, const SurfaceDescriptors& desc_target,
 												const Graph& ligand, const SurfaceDescriptors& desc_ligand,
 												std::vector<glm::dmat4>& mg_transformation) const
 {
-	std::cout<<"Number of poses: "<<matching_groups.size()<<std::endl;
-
+	// TODO: For future work, after translating and aligning we'll use
+	// ICP with Regular Grid to get a better alignment for the clouds.
+	
 	for(auto MG = matching_groups.begin(); MG != matching_groups.end(); ++MG)
 	{
 		//0) Split matching group pairs into two vectors
@@ -183,22 +187,25 @@ void Docker::transformations_from_matching_groups(const std::vector<MatchingGrou
 
 		//4) Rotate ligand so to align the average normal of the patches
 		//	(i.e., the average of the normals)
-		// Para computar a rotação que alinha as duas normais:
-		// calcule o produto vetorial de target_normal e ligand_normal (isso nos dá o eixo de rotação)
-		// calcule o produto interno de target_normal e ligand_normal (isso nos dá o ângulo de rotação)
-		// construa o quaternion que rotaciona um vetor para o outro a partir do ângulo e do eixo
-		// converta para uma matriz 4x4.
-		//		-> Prestar atenção no sentido da rotação! Como garantir que estamos indo para o lado certo?
-		//		   provavelmente o sentido do produto vetorial é informação suficiente (e a direção/sentido 
-		//			do quaternion é o mesmo do produto vetorial)
+		//	To accomplish this, the cross product between the two vectors gives us the
+		//	axle of rotation and the dot product gives us the angle. We build
+		//	a quaternion that rotates the first vector so to align it with the
+		//	second one, then we get the 4x4 rotation matrix which is equivalent
+		//	to this quaternion.
+		glm::dvec3 rot_axle = glm::cross(ligand_normal, target_normal);
 
+		double rot_angle = glm::acos( glm::dot(ligand_normal, target_normal) ) / 2.0;
+		double rot_cos = glm::cos(rot_angle), rot_sin = glm::sin(rot_angle);
 
+		glm::dquat quat_align_normals = glm::dquat(rot_cos,
+												rot_axle.x * rot_sin, 
+												rot_axle.y * rot_sin,
+												rot_axle.z * rot_sin);
 
+		glm::dmat4 align_normals = glm::mat4_cast(quat_align_normals);
+		
 		//5) Output transformation to mg_transformation
-
-		// For future work, after translating and aligning we'll use
-		// ICP with Regular Grid to get a better alignment for the
-		// clouds.
+		mg_transformation.push_back( align_normals * match_centroids );
 	}
 
 	return;
