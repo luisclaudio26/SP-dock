@@ -413,6 +413,43 @@ void Graph::feature_points(const UnionFind& uf, std::vector<Patch>& feature)
 	paint_patches(this->nodes, feature);
 }
 
+//Applies transformation T to all nodes
+void Graph::transform_cloud(const glm::dmat4& T)
+{
+	//if this is the first call to the function, copy
+	//contents of nodes to original_cloud
+	if(original_nodes.empty())
+		original_nodes.assign( nodes.begin(), nodes.end() );
+
+	//TODO: This is EXTREMELY inefficient, as every call to transform we'll
+	//need to copy an entire vector. Is there a better way? Maybe storing
+	//the last transformation, inverting it, composing the inverse with
+	//current T?
+	//
+	// T0 [last transformation], T [current transformation]
+	//
+	// Pi : cloud points
+	//
+	// After T0, cloud points become  T0.Pi
+	// To apply T as we want, apply T' = T.T0⁻¹
+	// to get   (T.T0⁻¹)T0.Pi = T.Pi
+
+	//Copy original nodes before applying transformation
+	nodes.assign( original_nodes.begin(), original_nodes.end() );
+	
+	for(auto n = this->nodes.begin(); n != this->nodes.end(); ++n)
+		n->transform_node(T);
+}
+
+//Sets the base color for this molecule. If this function
+//is not invoked in the program, the default color will be
+//white.
+void Graph::set_base_color(const glm::vec3& color)
+{
+	for(auto n = this->nodes.begin(); n != this->nodes.end(); ++n)
+		n->set_color(color);
+}
+
 void Graph::preprocess_mesh(std::vector< std::pair<Patch, Descriptor> >& out)
 {
 	compute_curvatures();

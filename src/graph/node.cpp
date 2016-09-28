@@ -51,3 +51,12 @@ void Node::set_curvature(const glm::dvec3& c)
 {
 	this->curvature = c;
 }
+
+void Node::transform_node(const glm::dmat4& T)
+{
+	//Transform position of node
+	this->pos = glm::dvec3(T * glm::dvec4(this->pos, 1.0));
+
+	//Rotate normal
+	this->normal = glm::dvec3(T * glm::dvec4(this->normal, 0.0));
+}

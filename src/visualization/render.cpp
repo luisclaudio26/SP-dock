@@ -32,7 +32,7 @@ static void pack_geometry_data(const Graph& in, std::vector<Vertex>& out)
 		const Node &f1 = in.get_node(f.a), 
 					&f2 = in.get_node(f.b), 
 					&f3 = in.get_node(f.c);
-	
+
 		out.push_back( NODE2VERTEX(f1) );
 		out.push_back( NODE2VERTEX(f2) );
 		out.push_back( NODE2VERTEX(f3) );
@@ -131,7 +131,7 @@ void Render::terminate_rendering()
 	glfwTerminate();
 }
 
-void Render::draw_meshes(Graph& mesh1, Graph& mesh2)
+void Render::draw_meshes(const Graph& mesh1, const Graph& mesh2)
 {
 	// Merge both meshes into a single one
 	std::vector<Vertex> mesh_data;

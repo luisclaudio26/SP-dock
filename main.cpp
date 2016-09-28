@@ -40,7 +40,17 @@ int main(int argc, char** args)
 															ligand, desc_ligand, 
 															mg_transformation);
 
-	Render::instance()->draw_meshes(target, ligand);
+	//docking phase: align cloud points according to calculated transformations
+	//TODO: REMEMBER TO STORE THE ORIGINAL POSITION OF THE VERTICES! IF SO, WE
+	//WON'T BE ABLE TO CORRECTLY TRANFORM 'EM
+	ligand.set_base_color( glm::vec3(0.0, 0.7, 0.7) );
+	target.set_base_color( glm::vec3(0.7, 0.7, 0.7) );
+
+	for(auto trans = mg_transformation.begin(); trans != mg_transformation.end(); ++trans)
+	{
+		ligand.transform_cloud(*trans);
+		Render::instance()->draw_meshes(target, ligand);
+	}
 
 	return 0;
 }

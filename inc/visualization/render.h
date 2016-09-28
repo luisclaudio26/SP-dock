@@ -36,7 +36,7 @@ public:
 	//---------- external operations -----------
 	//------------------------------------------
 	void draw_mesh(Graph& mesh);
-	void draw_meshes(Graph& mesh1, Graph& mesh2); //TODO: use variadic function
+	void draw_meshes(const Graph& mesh1, const Graph& mesh2); //TODO: use variadic function
 };
 
 #endif

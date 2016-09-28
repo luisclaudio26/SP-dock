@@ -14,6 +14,12 @@ typedef struct {
 class Graph
 {
 private:
+	//Here we store the original position of the nodes,
+	//so we can apply multiple transformations. We copy
+	//the contents from this->nodes in the first call to
+	//transform_cloud().
+	std::vector<Node> original_nodes;
+
 	std::vector<Node> nodes;
 	std::vector<Face> faces; //Used for rendering only (so far)
 
@@ -47,6 +53,8 @@ public:
 	void classify_points();
 	void segment_by_curvature(UnionFind& uf);
 	void feature_points(const UnionFind& uf, std::vector<Patch>& feature);
+	void transform_cloud(const glm::dmat4& T);
+	void set_base_color(const glm::vec3& color);
 
 	//After preprocessing the mesh, we output a list or pairs
 	//<P,D>, where P is the patch itself and D is the associated descriptor.

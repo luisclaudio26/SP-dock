@@ -45,6 +45,7 @@ public:
 	//-------------------------------
 	//These operations change the internal state of the node
 	void push_triangular_face(int adj1, int adj2);
+	void transform_node(const glm::dmat4& T);
 
 	//--------------------------------
 	//-------- Debugging ops ---------
