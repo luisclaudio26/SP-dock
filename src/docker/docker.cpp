@@ -180,20 +180,11 @@ void Docker::transformations_from_matching_groups(const std::vector<MatchingGrou
 		std::vector<glm::dvec3> ligand_cloud; glm::dvec3 ligand_normal;
 		build_cloud_from_group(ligand_groups, desc_ligand, ligand, ligand_cloud, ligand_normal);
 
-		//3) Translate ligand so to match centroids of groups
-		//TODO: TRANSLATION IS NOT BEING CORRECTLY COMPUTED!
-		//	-> After rotating the protein, centroid distances change! Maybe
-		//		we'll have to rotate everything first, then compute the translation.
+		//3) Compute centroids of each patch
 		glm::dvec3 target_centroid = cloud_centroid(target_cloud);
 		glm::dvec3 ligand_centroid = cloud_centroid(ligand_cloud);
 
-		//glm::dmat4 match_centroids = glm::translate(glm::dmat4(1.0), target_centroid - ligand_centroid);
-		//glm::dmat4 match_centroids = glm::dmat4(1.0);
-
-		//std::cout<<"Centroid docking transformation: "<<glm::to_string(match_centroids)<<std::endl<<std::endl;
-
-		//4) Rotate ligand so to align the average normal of the patches
-		//	(i.e., the average of the normals).
+		//4) Compute rotation that aligns the average normal of the patches.
 		//	To accomplish this, the cross product between the two vectors gives us the
 		//	axle of rotation and the dot product gives us the angle. We build
 		//	a quaternion that rotates the first vector so to align it with the
@@ -202,7 +193,6 @@ void Docker::transformations_from_matching_groups(const std::vector<MatchingGrou
 		//  to translate it and change distances!
 		//TODO: ROTATION IS NOT LINEAR IN THE END! DEFORMATION IS HAPPENING -> Rodrigues' formula?
 		//TODO: Border cases: vectors form an angle of 0°, 180°?
-		//TODO: Why are rotations translating complex so much!?
 
 		glm::dvec3 rot_axle = glm::cross(ligand_normal, target_normal);
 
@@ -216,18 +206,13 @@ void Docker::transformations_from_matching_groups(const std::vector<MatchingGrou
 
 		glm::dmat4 align_normals = glm::mat4_cast(quat_align_normals);
 
-		std::cout<<"Ligand centroid: "<<glm::to_string(ligand_centroid)<<std::endl;
-		std::cout<<"Normal alignment transformation: "<<glm::to_string(align_normals)<<std::endl<<std::endl;
-
-		//5) Output transformation to mg_transformation (send to origin, rotate, bring back to target centroid)
-		glm::dmat4 final_t = glm::translate(glm::dmat4(1.0), -ligand_centroid);
-		final_t = align_normals * final_t;
-		final_t = glm::translate(glm::dmat4(1.0), target_centroid) * final_t;
+		//5) Compose final transformation:
+		//		send to origin, rotate, bring back to target centroid
+		glm::dmat4 final_t = glm::translate(glm::dmat4(1.0), target_centroid) 
+								* align_normals
+								* glm::translate(glm::dmat4(1.0), -ligand_centroid);
 
 		mg_transformation.push_back( final_t );
-
-		std::cout<<"Final transformation: "<<glm::to_string( final_t )<<std::endl;
-		std::cout<<"---------------------------------------\n\n";
 	}
 
 	return;
