@@ -3,6 +3,8 @@
 #include <vector>
 #include <algorithm>
 
+#include <glm/gtx/string_cast.hpp>
+
 #include "./inc/docker/docker.h"
 #include "./inc/graph/graph.h"
 #include "./inc/io/fileio.h"

@@ -180,21 +180,30 @@ void Docker::transformations_from_matching_groups(const std::vector<MatchingGrou
 		build_cloud_from_group(ligand_groups, desc_ligand, ligand, ligand_cloud, ligand_normal);
 
 		//3) Translate ligand so to match centroids of groups
+		//TODO: TRANSLATION IS NOT BEING CORRECTLY COMPUTED!
+		//	-> After rotating the protein, centroid distances change! Maybe
+		//		we'll have to rotate everything first, then compute the translation.
 		glm::dvec3 target_centroid = cloud_centroid(target_cloud);
 		glm::dvec3 ligand_centroid = cloud_centroid(ligand_cloud);
 
 		glm::dmat4 match_centroids = glm::translate(glm::dmat4(1.0), target_centroid - ligand_centroid);
 
+		std::cout<<"Centroid docking transformation: "<<glm::to_string(match_centroids)<<std::endl<<std::endl;
+
 		//4) Rotate ligand so to align the average normal of the patches
-		//	(i.e., the average of the normals)
+		//	(i.e., the average of the normals).
 		//	To accomplish this, the cross product between the two vectors gives us the
 		//	axle of rotation and the dot product gives us the angle. We build
 		//	a quaternion that rotates the first vector so to align it with the
 		//	second one, then we get the 4x4 rotation matrix which is equivalent
-		//	to this quaternion.
-		glm::dvec3 rot_axle = glm::cross(ligand_normal, target_normal);
+		//	to this quaternion. Remember we need to rotate it around the centroid so not
+		//  to translate it and change distances!
+		//TODO: ROTATION IS NOT LINEAR IN THE END! DEFORMATION IS HAPPENING -> Rodrigues' formula?
+		//TODO: Border cases: vectors form an angle of 0°, 180°?
 
-		double rot_angle = glm::acos( glm::dot(ligand_normal, target_normal) ) / 2.0;
+		glm::dvec3 rot_axle = glm::cross(ligand_normal, -target_normal);
+
+		double rot_angle = glm::acos( glm::dot(ligand_normal, -target_normal) ) / 2.0;
 		double rot_cos = glm::cos(rot_angle), rot_sin = glm::sin(rot_angle);
 
 		glm::dquat quat_align_normals = glm::dquat(rot_cos,
@@ -202,10 +211,16 @@ void Docker::transformations_from_matching_groups(const std::vector<MatchingGrou
 												rot_axle.y * rot_sin,
 												rot_axle.z * rot_sin);
 
-		glm::dmat4 align_normals = glm::mat4_cast(quat_align_normals);
 		
+		glm::dmat4 align_normals = glm::mat4_cast(quat_align_normals);
+
+		std::cout<<"Normal alignment transformation: "<<glm::to_string(align_normals)<<std::endl<<std::endl;
+
 		//5) Output transformation to mg_transformation
 		mg_transformation.push_back( align_normals * match_centroids );
+
+		std::cout<<"Final transformation: "<<glm::to_string( align_normals * match_centroids )<<std::endl;
+		std::cout<<"---------------------------------------\n\n";
 	}
 
 	return;
