@@ -51,7 +51,8 @@ int main(int argc, char** args)
 	for(auto trans = mg_transformation.begin(); trans != mg_transformation.end(); ++trans)
 	{
 		ligand.transform_cloud(*trans);
-		Render::instance()->draw_meshes(target, ligand);
+		std::cout<<glm::to_string(*trans)<<std::endl<<std::endl;
+		Render::instance()->draw_meshes(ligand, target);
 	}
 
 	return 0;
