@@ -19,7 +19,11 @@ void build_vector_of_points(const std::vector<Node>& nodes, const std::vector<in
 		out.push_back( nodes[*it].get_pos() );
 }
 
-void principal_component_analysis(const std::vector<glm::dvec3>& points, glm::dmat3& out_eigen_vec, glm::dvec3& out_eigen_val)
+void principal_component_analysis(const std::vector<glm::dvec3>& points, 
+									glm::dmat3& out_eigen_vec, 
+									glm::dvec3& out_eigen_val,
+									glm::dvec3& least_eigen_vec,
+									double& least_eigen_val)
 {
 	//3 rows, n columns
 	int nrows = 3, ncolumns = points.size();
@@ -49,19 +53,61 @@ void principal_component_analysis(const std::vector<glm::dvec3>& points, glm::dm
 
 	gsl_eigen_symmv(covar, eigen_val, eigen_vec, eigen_aux);
 
-	//sort eigenvectors by eigenvalues
-	gsl_eigen_symmv_sort(eigen_val, eigen_vec, GSL_EIGEN_SORT_VAL_DESC);
+	std::cout<<"Eigenvector matrix: "<<std::endl;
+	for(int i = 0; i < 3; i++)
+	{
+		for(int j = 0; j < 3; j++)
+			std::cout<<gsl_matrix_get(eigen_vec, i, j)<<" ";
+		std::cout<<std::endl;
+	}
 
-	//build final matrix
+	std::cout<<"Eigenvalues: "<<std::endl;
+	for(int i = 0; i < 3; i++) std::cout<<gsl_vector_get(eigen_val, i)<<" ";
+	std::cout<<std::endl;
+
+
+	//build final matrix -> TODO: do we need to transpose/invert?
 	memcpy( glm::value_ptr(out_eigen_val), eigen_val->data, 3*sizeof(double) );	
 	memcpy( glm::value_ptr(out_eigen_vec), eigen_vec->data, 9*sizeof(double) );
-	
-	//transpose maps from origin to space defined by the three eigenvectors
-	out_eigen_vec = glm::transpose(out_eigen_vec);
+
+	//------ get least eigenvalue and corresponding eigenvector ------
+	gsl_vector* sort_eigen_val = gsl_vector_alloc(3);
+	gsl_vector_memcpy(sort_eigen_val, eigen_val);
+
+	gsl_matrix* sort_eigen_vec = gsl_matrix_alloc(3, 3);
+	gsl_matrix_memcpy(sort_eigen_vec, eigen_vec);
+
+	//effectively sort in descending order
+	gsl_eigen_symmv_sort(sort_eigen_val, sort_eigen_vec, GSL_EIGEN_SORT_VAL_DESC);
+
+	//copy to output parameters
+	least_eigen_val = gsl_vector_get(sort_eigen_val, 2);
+
+	for(int i = 0; i < 3; i++)
+		least_eigen_vec[i] = gsl_matrix_get(sort_eigen_vec, i, 2);
+
+	std::cout<<"Sorted eigenvector matrix: "<<std::endl;
+	for(int i = 0; i < 3; i++)
+	{
+		for(int j = 0; j < 3; j++)
+			std::cout<<gsl_matrix_get(sort_eigen_vec, i, j)<<" ";
+		std::cout<<std::endl;
+	}
+
+	std::cout<<"Sorted eigenvalues: "<<std::endl;
+	for(int i = 0; i < 3; i++) std::cout<<gsl_vector_get(sort_eigen_val, i)<<" ";
+	std::cout<<std::endl;
+
+	std::cout<<"Least eigenvector: "<<std::endl;
+	std::cout<<glm::to_string(least_eigen_vec)<<std::endl;
+
+	std::cout<<"Least eigenvalues: "<<least_eigen_val<<std::endl;
+	std::cout<<"---------------------------------\n\n";
 
 	//delete pointers
 	gsl_matrix_free(data); gsl_matrix_free(data_t); gsl_matrix_free(covar);
 	gsl_matrix_free(eigen_vec); gsl_vector_free(eigen_val);
+	gsl_matrix_free(sort_eigen_vec); gsl_vector_free(sort_eigen_val);
 	gsl_eigen_symmv_free(eigen_aux);
 }
 
@@ -98,11 +144,15 @@ Descriptor Patch::compute_descriptor(const std::vector<Node>& points)
 
 	//PCA of translated cloud point
 	glm::dmat3 eigen_vec; glm::dvec3 eigen_val;
-	principal_component_analysis(p, eigen_vec, eigen_val);
+	glm::dvec3 least_evec; double least_eval;
+	principal_component_analysis(p, eigen_vec, eigen_val, least_evec, least_eval);
 
-	//send all points to the eigenvectors basis
-	for(auto it = p.begin(); it != p.end(); ++it)
-		*it = eigen_vec * (*it);
+	//send all points to the eigenvectors basis (why am I doing this?!)
+	//for(auto it = p.begin(); it != p.end(); ++it)
+	//	*it = eigen_vec * (*it);
+
+	//rotate patch normal according to the eigenvectors basis
+	glm::dvec3 rotated_normal = eigen_vec * this->normal; 
 
 	//first, totally naïve descriptor: just store "curvature"
 	//as the relative variance in the direction of the least
@@ -110,8 +160,8 @@ Descriptor Patch::compute_descriptor(const std::vector<Node>& points)
 	//Signal is important to know whether patch is convex or concave.
 	double total = 0.0; for(int i = 0; i < 3; i++) total += eigen_val[i];
 
-	double curvature = eigen_val[2] / total;
-	Convexity type = glm::dot( glm::row(eigen_vec, 2), this->normal) < 0 ? CONVEX : CONCAVE;
+	double curvature = least_eval / total;
+	Convexity type = glm::dot( least_evec, rotated_normal) < 0 ? CONVEX : CONCAVE; //TODO: Review whether we take the rows or columns
 
 	return (Descriptor){curvature, type};
 }
