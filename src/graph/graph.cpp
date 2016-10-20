@@ -310,11 +310,6 @@ void Graph::compute_curvatures()
 //Classify points into three groups: concave, convex or flat
 void Graph::classify_points()
 {
-	//TODO: THIS METHOD WON'T WORK AS WE DO IT NOW
-	//unless centroid is inside mesh. Bruno's suggestion
-	//was to discretize using voxels and then test
-	//whether the normal vector points towards the center
-	//of the implicit mesh
 	std::vector<glm::dvec3> point_cloud;
 	for(auto it = this->nodes.begin(); it != this->nodes.end(); ++it)
 		point_cloud.push_back( it->get_pos() );
@@ -410,7 +405,7 @@ void Graph::feature_points(const UnionFind& uf, std::vector<Patch>& feature)
 	remove_spurious_patches(Parameters::PATCH_SIZE_THRESH, feature);
 
 	//paint patches
-	paint_patches(this->nodes, feature);
+	//paint_patches(this->nodes, feature);
 }
 
 //Applies transformation T to all nodes
@@ -466,5 +461,8 @@ void Graph::preprocess_mesh(std::vector< std::pair<Patch, Descriptor> >& out)
 	{
 		Descriptor d = p->compute_descriptor( this->nodes );
 		out.push_back( std::make_pair(*p, d) );
+
+		p->paint_patch(this->nodes, (d.type == 1 ) ? glm::vec3(0.5, 0.0, 0.0) 
+													: glm::vec3(0.0, 0.0, 0.5));
 	}
 }
