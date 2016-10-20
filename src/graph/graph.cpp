@@ -462,7 +462,7 @@ void Graph::preprocess_mesh(std::vector< std::pair<Patch, Descriptor> >& out)
 		Descriptor d = p->compute_descriptor( this->nodes );
 		out.push_back( std::make_pair(*p, d) );
 
-		p->paint_patch(this->nodes, (d.type == 1 ) ? glm::vec3(0.5, 0.0, 0.0) 
+		p->paint_patch(this->nodes, (d.type == CONCAVE ) ? glm::vec3(0.5, 0.0, 0.0) 
 													: glm::vec3(0.0, 0.0, 0.5));
 	}
 }

@@ -5,7 +5,7 @@
 
 typedef struct {
 	double curv;
-	int type;
+	Convexity type;
 } Descriptor;
 
 #endif
