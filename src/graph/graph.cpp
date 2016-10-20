@@ -207,8 +207,14 @@ static Patch generate_patch(const std::vector<Node>& nodes, std::list<int>& rank
 
 	delete[] visited;
 
+	//compute normal (average of the normals)
+	glm::dvec3 avg_normal = glm::dvec3(0.0);
+	for(int i = 0; i < patch.size(); i++) avg_normal += nodes[ patch[i] ].get_normal();
+	avg_normal *= (1.0) / patch.size();
+
 	//push to patch and return
-	return Patch( nodes[point_id].get_normal(), patch);
+	//TODO: Maybe this is not the correct way of 
+	return Patch( avg_normal, patch);
 }
 
 static void remove_spurious_patches(int threshold, std::vector<Patch>& features)
@@ -393,6 +399,11 @@ void Graph::feature_points(const UnionFind& uf, std::vector<Patch>& feature)
 
 			//TODO: PATCH should be able to capture r-values by use of move semantics in the =operator
 			Patch final_patch = generate_patch(this->nodes, ranked_points, point_id);
+			
+
+			double dotProd = -glm::dot(final_patch.get_normal(), this->nodes[point_id].get_curvature());
+
+			final_patch.paint_patch(this->nodes, glm::dvec3(0.3, dotProd, 0.3));
 
 			//remove point from tree
 			ranked_points.erase( ranked_points.begin() );
@@ -462,7 +473,7 @@ void Graph::preprocess_mesh(std::vector< std::pair<Patch, Descriptor> >& out)
 		Descriptor d = p->compute_descriptor( this->nodes );
 		out.push_back( std::make_pair(*p, d) );
 
-		p->paint_patch(this->nodes, (d.type == CONCAVE ) ? glm::vec3(0.5, 0.0, 0.0) 
-													: glm::vec3(0.0, 0.0, 0.5));
+		//p->paint_patch(this->nodes, (d.type == CONCAVE ) ? glm::vec3(0.5, 0.0, 0.0) 
+		//											: glm::vec3(0.0, 0.0, 0.5));
 	}
 }

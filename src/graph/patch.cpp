@@ -45,26 +45,13 @@ void principal_component_analysis(const std::vector<glm::dvec3>& points,
 	//multiply matrices
 	gsl_matrix* covar = gsl_matrix_calloc(3, 3);
 	gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, data, data_t, 0.0, covar);
-	
+
 	//eigen decompose covariance matrix
 	gsl_eigen_symmv_workspace* eigen_aux = gsl_eigen_symmv_alloc(3);
 	gsl_vector* eigen_val = gsl_vector_alloc(3);
 	gsl_matrix* eigen_vec = gsl_matrix_alloc(3, 3);
 
 	gsl_eigen_symmv(covar, eigen_val, eigen_vec, eigen_aux);
-
-	std::cout<<"Eigenvector matrix: "<<std::endl;
-	for(int i = 0; i < 3; i++)
-	{
-		for(int j = 0; j < 3; j++)
-			std::cout<<gsl_matrix_get(eigen_vec, i, j)<<" ";
-		std::cout<<std::endl;
-	}
-
-	std::cout<<"Eigenvalues: "<<std::endl;
-	for(int i = 0; i < 3; i++) std::cout<<gsl_vector_get(eigen_val, i)<<" ";
-	std::cout<<std::endl;
-
 
 	//build final matrix -> TODO: do we need to transpose/invert?
 	memcpy( glm::value_ptr(out_eigen_val), eigen_val->data, 3*sizeof(double) );	
@@ -85,24 +72,6 @@ void principal_component_analysis(const std::vector<glm::dvec3>& points,
 
 	for(int i = 0; i < 3; i++)
 		least_eigen_vec[i] = gsl_matrix_get(sort_eigen_vec, i, 2);
-
-	std::cout<<"Sorted eigenvector matrix: "<<std::endl;
-	for(int i = 0; i < 3; i++)
-	{
-		for(int j = 0; j < 3; j++)
-			std::cout<<gsl_matrix_get(sort_eigen_vec, i, j)<<" ";
-		std::cout<<std::endl;
-	}
-
-	std::cout<<"Sorted eigenvalues: "<<std::endl;
-	for(int i = 0; i < 3; i++) std::cout<<gsl_vector_get(sort_eigen_val, i)<<" ";
-	std::cout<<std::endl;
-
-	std::cout<<"Least eigenvector: "<<std::endl;
-	std::cout<<glm::to_string(least_eigen_vec)<<std::endl;
-
-	std::cout<<"Least eigenvalues: "<<least_eigen_val<<std::endl;
-	std::cout<<"---------------------------------\n\n";
 
 	//delete pointers
 	gsl_matrix_free(data); gsl_matrix_free(data_t); gsl_matrix_free(covar);
@@ -147,12 +116,8 @@ Descriptor Patch::compute_descriptor(const std::vector<Node>& points)
 	glm::dvec3 least_evec; double least_eval;
 	principal_component_analysis(p, eigen_vec, eigen_val, least_evec, least_eval);
 
-	//send all points to the eigenvectors basis (why am I doing this?!)
-	//for(auto it = p.begin(); it != p.end(); ++it)
-	//	*it = eigen_vec * (*it);
-
 	//rotate patch normal according to the eigenvectors basis
-	glm::dvec3 rotated_normal = eigen_vec * this->normal; 
+	//glm::dvec3 rotated_normal = eigen_vec * this->normal; 
 
 	//first, totally naïve descriptor: just store "curvature"
 	//as the relative variance in the direction of the least
@@ -161,7 +126,8 @@ Descriptor Patch::compute_descriptor(const std::vector<Node>& points)
 	double total = 0.0; for(int i = 0; i < 3; i++) total += eigen_val[i];
 
 	double curvature = least_eval / total;
-	Convexity type = glm::dot( least_evec, rotated_normal) < 0 ? CONVEX : CONCAVE; //TODO: Review whether we take the rows or columns
+	Convexity type = glm::dot( least_evec, this->normal ) < 0 ? CONVEX : CONCAVE;
+
 
 	return (Descriptor){curvature, type};
 }
