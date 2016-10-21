@@ -126,9 +126,11 @@ Descriptor Patch::compute_descriptor(const std::vector<Node>& points)
 	double total = 0.0; for(int i = 0; i < 3; i++) total += eigen_val[i];
 
 	double curvature = least_eval / total;
-	//Convexity type = glm::dot( least_evec, this->normal ) < 0 ? CONVEX : CONCAVE;
 
-	Convexity type = glm::dot( least_evec, this->curvature) > 0 ? CONCAVE : CONVEX;
+	//SOLUTION: Least eigenvalue doesn't necessarily point outside the
+	//patch! (see Sorkine's book, pg. 55). This means we really need to
+	//carry curvature information so to correctly compute descriptors!
+	Convexity type = glm::dot( this->normal, this->curvature) > 0 ? CONCAVE : CONVEX;
 
 	return (Descriptor){curvature, type};
 }

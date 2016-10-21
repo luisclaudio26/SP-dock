@@ -35,7 +35,7 @@ int main(int argc, char** args)
 	std::vector<MatchingGroup> matching_groups;
 	Docker::instance()->build_matching_groups(desc_target, desc_ligand, matching_groups);
 
-	Render::instance()->draw_mesh( target );
+	//Render::instance()->draw_mesh( target );
 
 	//build transformations matrices that align matching groups
 	std::vector<glm::dmat4> mg_transformation;
@@ -45,7 +45,6 @@ int main(int argc, char** args)
 															mg_transformation);
 
 	//docking phase: align cloud points according to calculated transformations
-	/*
 	ligand.set_base_color( glm::vec3(0.0, 0.7, 0.7) );
 	target.set_base_color( glm::vec3(0.7, 0.7, 0.7) );
 
@@ -54,7 +53,7 @@ int main(int argc, char** args)
 		ligand.transform_cloud(*trans);
 		std::cout<<glm::to_string(*trans)<<std::endl<<std::endl;
 		Render::instance()->draw_meshes(ligand, target);
-	}*/
+	}
 
 	return 0;
 }
