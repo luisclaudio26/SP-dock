@@ -400,10 +400,12 @@ void Graph::feature_points(const UnionFind& uf, std::vector<Patch>& feature)
 			//TODO: PATCH should be able to capture r-values by use of move semantics in the =operator
 			Patch final_patch = generate_patch(this->nodes, ranked_points, point_id);
 			
+			/*
+			double dotProd = glm::dot(final_patch.get_normal(), this->nodes[point_id].get_curvature());
+			final_patch.paint_patch(this->nodes, dotProd < 0.0 ? glm::vec3(0.3, 0.0, 0.3) : glm::vec3(0.3, 1.0, 0.3));
+			*/
 
-			double dotProd = -glm::dot(final_patch.get_normal(), this->nodes[point_id].get_curvature());
-
-			final_patch.paint_patch(this->nodes, glm::dvec3(0.3, dotProd, 0.3));
+			final_patch.curvature = this->nodes[point_id].get_curvature();
 
 			//remove point from tree
 			ranked_points.erase( ranked_points.begin() );
@@ -473,7 +475,7 @@ void Graph::preprocess_mesh(std::vector< std::pair<Patch, Descriptor> >& out)
 		Descriptor d = p->compute_descriptor( this->nodes );
 		out.push_back( std::make_pair(*p, d) );
 
-		//p->paint_patch(this->nodes, (d.type == CONCAVE ) ? glm::vec3(0.5, 0.0, 0.0) 
-		//											: glm::vec3(0.0, 0.0, 0.5));
+		p->paint_patch(this->nodes, (d.type == CONCAVE ) ? glm::vec3(0.3, 0.0, 0.3) 
+													: glm::vec3(0.3, 1.0, 0.3));
 	}
 }

@@ -17,6 +17,9 @@ public:
 	//Temporarily public
 	std::vector<int> nodes;
 
+	//temporary
+	glm::dvec3 curvature;
+
 	Patch(const glm::dvec3& normal, const std::vector<int>& nodes);
 
 	//-----------------------------------
