@@ -35,8 +35,6 @@ int main(int argc, char** args)
 	std::vector<MatchingGroup> matching_groups;
 	Docker::instance()->build_matching_groups(desc_target, desc_ligand, matching_groups);
 
-	//Render::instance()->draw_mesh( target );
-
 	//build transformations matrices that align matching groups
 	std::vector<glm::dmat4> mg_transformation;
 	Docker::instance()->transformations_from_matching_groups(matching_groups, 

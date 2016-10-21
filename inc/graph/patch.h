@@ -9,16 +9,10 @@
 class Patch
 {
 private:
-	
-	glm::dvec3 normal;
-
-	glm::dvec3 centroid;
+	glm::dvec3 normal, centroid, curvature;
 public:
 	//Temporarily public
 	std::vector<int> nodes;
-
-	//temporary
-	glm::dvec3 curvature;
 
 	Patch(const glm::dvec3& normal, const std::vector<int>& nodes);
 
@@ -33,6 +27,9 @@ public:
 	Descriptor compute_descriptor(const std::vector<Node>& points);
 	glm::dvec3 get_pos() const;
 	glm::dvec3 get_normal() const;
+	glm::dvec3 get_curvature() const;
+
+	void set_curvature(const glm::dvec3& c);
 
 	void paint_patch(std::vector<Node>& graph, const glm::vec3& color) const;
 };
