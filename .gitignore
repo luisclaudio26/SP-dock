@@ -1,3 +1,4 @@
 keypoints
 *.o
 data/
+images/
